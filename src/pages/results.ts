@@ -38,10 +38,13 @@ export function renderResults(container: HTMLElement): void {
             <div class="deviation-grid" id="deviation-grid"></div>
           </section>
 
-          <!-- Disclaimer -->
-          <p class="results-disclaimer">${t('results.disclaimer')}</p>
+           <!-- Disclaimer -->
+           <p class="results-disclaimer">${t('results.disclaimer')}</p>
 
-          <!-- Action Buttons -->
+           <!-- Citation -->
+           <p class="results-citation">${t('results.citation')}</p>
+
+           <!-- Action Buttons -->
           <section class="results-actions">
             <div class="actions-primary">
               <button class="btn-primary" id="btn-refine">${t('results.refine')}</button>
@@ -309,6 +312,18 @@ function injectResultsStyles(): void {
       background: var(--bg-secondary);
       border-radius: var(--radius-sm);
       border-left: 3px solid var(--border);
+    }
+
+    .results-citation {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 2rem;
+      padding: 0.75rem;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--border);
+      opacity: 0.85;
     }
 
     .results-actions {
