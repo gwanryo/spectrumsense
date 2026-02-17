@@ -223,7 +223,7 @@ function drawFooter(ctx: CanvasRenderingContext2D): void {
   ctx.font = '18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
   ctx.textAlign = 'left'
   ctx.textBaseline = 'middle'
-  ctx.fillText('gwanryo.github.io/spectrumsense', 80, CARD_HEIGHT - 38)
+   ctx.fillText('rwe.kr/spectrumsense', 80, CARD_HEIGHT - 38)
 
   // Tagline
   ctx.textAlign = 'right'
