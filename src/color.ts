@@ -8,7 +8,8 @@ export const BOUNDARIES: Boundary[] = [
   { from: 'yellow', to: 'green',  standardHue: 78,  searchRange: { low: 55,  high: 105 } },
   { from: 'green',  to: 'blue',   standardHue: 163, searchRange: { low: 120, high: 210 } },
   { from: 'blue',   to: 'violet', standardHue: 258, searchRange: { low: 220, high: 290 } },
-  { from: 'violet', to: 'red',    standardHue: 345, searchRange: { low: 300, high: 390 } },
+  { from: 'violet', to: 'pink',   standardHue: 300, searchRange: { low: 280, high: 325 } },
+  { from: 'pink',   to: 'red',    standardHue: 345, searchRange: { low: 320, high: 390 } },
   // Note: 390 = 360 + 30, representing wrap-around to 30° past 0°
 ]
 
@@ -61,17 +62,18 @@ export function hslString(hue: number): string {
 
 /**
  * Given a hue value and a set of user boundaries, return which color region it falls in.
- * Boundaries array: [R→O, O→Y, Y→G, G→B, B→V, V→R]
+ * Boundaries array: [R→O, O→Y, Y→G, G→B, B→V, V→P, P→R]
  */
 export function getColorName(hue: number, boundaries: number[]): ColorName {
   const h = normalizeHue(hue)
-  const [ro, oy, yg, gb, bv, vr] = boundaries.map(normalizeHue)
+  const [ro, oy, yg, gb, bv, vp, pr] = boundaries.map(normalizeHue)
 
   // Check each region in order
-  if (h >= vr || h < ro) return 'red'
+  if (h >= pr || h < ro) return 'red'
   if (h >= ro && h < oy) return 'orange'
   if (h >= oy && h < yg) return 'yellow'
   if (h >= yg && h < gb) return 'green'
   if (h >= gb && h < bv) return 'blue'
-  return 'violet'
+  if (h >= bv && h < vp) return 'violet'
+  return 'pink'
 }

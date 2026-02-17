@@ -3,12 +3,12 @@ import { computeDeviations, getColorRegions, summarizeResults } from '../src/res
 import { BOUNDARIES } from '../src/color'
 
 const standardBoundaries = BOUNDARIES.map(b => b.standardHue)
-// [18, 48, 78, 163, 258, 345]
+// [18, 48, 78, 163, 258, 300, 345]
 
 describe('computeDeviations', () => {
   it('returns zero deviation for exact standard boundaries', () => {
     const deviations = computeDeviations(standardBoundaries)
-    expect(deviations).toHaveLength(6)
+    expect(deviations).toHaveLength(7)
     for (const d of deviations) {
       expect(d.difference).toBeCloseTo(0, 5)
     }
@@ -32,44 +32,45 @@ describe('computeDeviations', () => {
     expect(deviations[1].difference).toBeCloseTo(-10, 0)
   })
 
-  it('CRITICAL: handles circular distance for Violet→Red boundary', () => {
-    // Standard Violet→Red is at 345°
+  it('CRITICAL: handles circular distance for Pink→Red boundary', () => {
+    // Standard Pink→Red is at 345°
     // User sees it at 5° — that's +20° clockwise (not -340°)
     const shifted = [...standardBoundaries]
-    shifted[5] = 5
+    shifted[6] = 5
     const deviations = computeDeviations(shifted)
     // circularDistance(345, 5) should be +20° (clockwise), not -340°
-    expect(deviations[5].difference).toBeCloseTo(20, 0)
-    expect(Math.abs(deviations[5].difference)).toBeLessThan(180)
+    expect(deviations[6].difference).toBeCloseTo(20, 0)
+    expect(Math.abs(deviations[6].difference)).toBeLessThan(180)
   })
 
   it('CRITICAL: user=5° vs standard=355° → small positive difference (~10°)', () => {
     // This is the specific test case from the plan
     const boundaries = [...standardBoundaries]
-    boundaries[5] = 5 // user boundary at 5°
-    // Standard for Violet→Red is 345°, but let's test with 355° explicitly
+    boundaries[6] = 5 // user boundary at 5°
+    // Standard for Pink→Red is 345°, but let's test with 355° explicitly
     // We need to test circularDistance(355, 5) = +10°
     // Since BOUNDARIES[5].standardHue = 345, let's test with a boundary at 355
     // by checking the circularDistance function directly via result computation
     // Use a custom test: deviation should be small, not large
     const deviations = computeDeviations(boundaries)
-    // deviation[5]: circularDistance(345, 5) = +20° (not -340°)
-    expect(Math.abs(deviations[5].difference)).toBeLessThan(180)
-    expect(deviations[5].difference).toBeGreaterThan(0) // clockwise shift
+    // deviation[6]: circularDistance(345, 5) = +20° (not -340°)
+    expect(Math.abs(deviations[6].difference)).toBeLessThan(180)
+    expect(deviations[6].difference).toBeGreaterThan(0) // clockwise shift
   })
 
-  it('returns 6 deviations for 6 boundaries', () => {
+  it('returns 7 deviations for 7 boundaries', () => {
     const deviations = computeDeviations(standardBoundaries)
-    expect(deviations).toHaveLength(6)
+    expect(deviations).toHaveLength(7)
     expect(deviations[0].boundary.from).toBe('red')
     expect(deviations[5].boundary.from).toBe('violet')
+    expect(deviations[6].boundary.from).toBe('pink')
   })
 })
 
 describe('getColorRegions', () => {
-  it('returns 6 regions', () => {
+  it('returns 7 regions', () => {
     const regions = getColorRegions(standardBoundaries)
-    expect(regions).toHaveLength(6)
+    expect(regions).toHaveLength(7)
   })
 
   it('regions span approximately 360° total', () => {
@@ -86,7 +87,7 @@ describe('getColorRegions', () => {
   })
 
   it('handles shifted boundaries correctly', () => {
-    const shifted = [20, 50, 80, 165, 260, 340]
+    const shifted = [20, 50, 80, 165, 260, 305, 340]
     const regions = getColorRegions(shifted)
     const totalSpan = regions.reduce((sum, r) => sum + r.spanDegrees, 0)
     expect(totalSpan).toBeCloseTo(360, 0)
@@ -111,6 +112,6 @@ describe('summarizeResults', () => {
   it('includes color regions', () => {
     const deviations = computeDeviations(standardBoundaries)
     const summary = summarizeResults(deviations)
-    expect(summary.colorRegions).toHaveLength(6)
+    expect(summary.colorRegions).toHaveLength(7)
   })
 })

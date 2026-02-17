@@ -28,22 +28,22 @@ function runFullTest(
 }
 
 describe('createTestSession', () => {
-  it('normal mode has 36 total steps', () => {
+  it('normal mode has 42 total steps', () => {
     const state = createTestSession('normal', 'en')
-    expect(state.totalSteps).toBe(36)
+    expect(state.totalSteps).toBe(42)
     expect(state.mode).toBe('normal')
     expect(state.phase).toBe('testing')
   })
 
-  it('refine mode has 18 total steps', () => {
+  it('refine mode has 21 total steps', () => {
     const state = createTestSession('refine', 'en')
-    expect(state.totalSteps).toBe(18)
+    expect(state.totalSteps).toBe(21)
     expect(state.mode).toBe('refine')
   })
 
-  it('initializes 6 boundary states', () => {
+  it('initializes 7 boundary states', () => {
     const state = createTestSession('normal', 'en')
-    expect(state.boundaries).toHaveLength(6)
+    expect(state.boundaries).toHaveLength(7)
   })
 
   it('starts at boundary index 0, step 0', () => {
@@ -62,7 +62,7 @@ describe('getCurrentQuestion', () => {
     expect(question.firstLabel).toMatch(/^colors\./)
     expect(question.secondLabel).toMatch(/^colors\./)
     expect(question.questionNumber).toBe(1)
-    expect(question.totalQuestions).toBe(36)
+    expect(question.totalQuestions).toBe(42)
   })
 
   it('first question is for Red->Orange boundary', () => {
@@ -82,7 +82,7 @@ describe('answerQuestion', () => {
 
   it('cycles through boundaries', () => {
     let state = createTestSession('normal', 'en')
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 7; i++) {
       state = answerQuestion(state, true)
       if (state.phase === 'interstitial') state = advanceFromInterstitial(state)
     }
@@ -97,19 +97,19 @@ describe('answerQuestion', () => {
 
   it('sets phase to complete after last answer', () => {
     const { count } = runFullTest('normal')
-    expect(count).toBe(36)
+    expect(count).toBe(42)
   })
 })
 
-describe('Normal mode: exactly 36 questions', () => {
-  it('completes in exactly 36 answers', () => {
+describe('Normal mode: exactly 42 questions', () => {
+  it('completes in exactly 42 answers', () => {
     const { count } = runFullTest('normal')
-    expect(count).toBe(36)
+    expect(count).toBe(42)
   })
 
-  it('returns 6 valid boundary hue values', () => {
+  it('returns 7 valid boundary hue values', () => {
     const { results } = runFullTest('normal')
-    expect(results.boundaries).toHaveLength(6)
+    expect(results.boundaries).toHaveLength(7)
     for (const hue of results.boundaries) {
       expect(hue).toBeGreaterThanOrEqual(0)
       expect(hue).toBeLessThanOrEqual(360)
@@ -123,18 +123,18 @@ describe('Normal mode: exactly 36 questions', () => {
   })
 })
 
-describe('Refine mode: exactly 18 questions', () => {
-  it('completes in exactly 18 answers', () => {
+describe('Refine mode: exactly 21 questions', () => {
+  it('completes in exactly 21 answers', () => {
     const { results: normalResults } = runFullTest('normal')
     const { count } = runFullTest('refine', normalResults)
-    expect(count).toBe(18)
+    expect(count).toBe(21)
   })
 
   it('refine results are within +/-15 degrees of normal results', () => {
     const { results: normalResults } = runFullTest('normal')
     const { results: refineResults } = runFullTest('refine', normalResults)
 
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 7; i++) {
       const diff = Math.abs(refineResults.boundaries[i] - normalResults.boundaries[i])
       const circularDiff = Math.min(diff, 360 - diff)
       expect(circularDiff).toBeLessThanOrEqual(15)

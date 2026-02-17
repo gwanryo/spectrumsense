@@ -5,6 +5,7 @@ import {
   circularDistance,
   hslString,
   BOUNDARIES,
+  getColorName,
 } from '../src/color'
 
 describe('normalizeHue', () => {
@@ -93,29 +94,50 @@ describe('hslString', () => {
 })
 
 describe('BOUNDARIES', () => {
-  it('has exactly 6 boundaries', () => {
-    expect(BOUNDARIES).toHaveLength(6)
+  it('has exactly 7 boundaries', () => {
+    expect(BOUNDARIES).toHaveLength(7)
   })
 
   it('has correct standard hues', () => {
     const hues = BOUNDARIES.map(b => b.standardHue)
-    expect(hues).toEqual([18, 48, 78, 163, 258, 345])
+    expect(hues).toEqual([18, 48, 78, 163, 258, 300, 345])
   })
 
   it('has correct color name pairs', () => {
     expect(BOUNDARIES[0]).toMatchObject({ from: 'red', to: 'orange' })
-    expect(BOUNDARIES[5]).toMatchObject({ from: 'violet', to: 'red' })
+    expect(BOUNDARIES[5]).toMatchObject({ from: 'violet', to: 'pink' })
+    expect(BOUNDARIES[6]).toMatchObject({ from: 'pink', to: 'red' })
   })
 
-  it('Violet→Red boundary has wrap-around range', () => {
-    const vr = BOUNDARIES[5]
-    expect(vr.searchRange.low).toBe(300)
-    expect(vr.searchRange.high).toBe(390)
+  it('Violet→Pink boundary has expected range', () => {
+    const vp = BOUNDARIES[5]
+    expect(vp.searchRange.low).toBe(280)
+    expect(vp.searchRange.high).toBe(325)
+  })
+
+  it('Pink→Red boundary has wrap-around range', () => {
+    const pr = BOUNDARIES[6]
+    expect(pr.searchRange.low).toBe(320)
+    expect(pr.searchRange.high).toBe(390)
   })
 
   it('all non-wrap boundaries have low < high', () => {
-    BOUNDARIES.slice(0, 5).forEach(b => {
+    BOUNDARIES.slice(0, 6).forEach(b => {
       expect(b.searchRange.low).toBeLessThan(b.searchRange.high)
     })
+  })
+})
+
+describe('getColorName with 7 boundaries', () => {
+  const boundaries = BOUNDARIES.map(b => b.standardHue)
+
+  it('classifies violet and pink regions correctly', () => {
+    expect(getColorName(290, boundaries)).toBe('violet')
+    expect(getColorName(320, boundaries)).toBe('pink')
+  })
+
+  it('keeps wrap-around reds on both ends', () => {
+    expect(getColorName(350, boundaries)).toBe('red')
+    expect(getColorName(10, boundaries)).toBe('red')
   })
 })

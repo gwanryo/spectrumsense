@@ -1,31 +1,31 @@
 import type { TestResult, Locale } from './types'
 
 // Encoding format (compact binary):
-// - 6 boundary hues: each stored as 2 bytes (uint16, 0-360 mapped to 0-3600 for 0.1° precision)
+// - 7 boundary hues: each stored as 2 bytes (uint16, 0-360 mapped to 0-3600 for 0.1° precision)
 // - 1 byte: mode (0=normal, 1=refine)
 // - 1 byte: locale (0=en, 1=ko, 2=ja)
-// Total: 14 bytes → ~19 chars Base64URL
+// Total: 16 bytes → ~22 chars Base64URL
 
 const LOCALE_MAP: Locale[] = ['en', 'ko', 'ja']
 const BASE_URL = 'https://rwe.kr/spectrumsense/'
 
 /** Encode a TestResult into a compact Base64URL string */
 export function encodeResult(result: TestResult): string {
-  const buffer = new ArrayBuffer(14)
+  const buffer = new ArrayBuffer(16)
   const view = new DataView(buffer)
 
-  // 6 boundaries × 2 bytes each (stored as tenths of degrees, 0–3600)
-  for (let i = 0; i < 6; i++) {
+  // 7 boundaries × 2 bytes each (stored as tenths of degrees, 0–3600)
+  for (let i = 0; i < 7; i++) {
     const hue = Math.round(((result.boundaries[i] ?? 0) % 360 + 360) % 360 * 10)
     view.setUint16(i * 2, hue, false) // big-endian
   }
 
   // Mode byte
-  view.setUint8(12, result.mode === 'refine' ? 1 : 0)
+  view.setUint8(14, result.mode === 'refine' ? 1 : 0)
 
   // Locale byte
   const localeIndex = LOCALE_MAP.indexOf(result.locale)
-  view.setUint8(13, localeIndex >= 0 ? localeIndex : 0)
+  view.setUint8(15, localeIndex >= 0 ? localeIndex : 0)
 
   // Convert to Base64URL
   const bytes = new Uint8Array(buffer)
@@ -51,17 +51,17 @@ export function decodeResult(encoded: string): TestResult | null {
       .padEnd(encoded.length + (4 - (encoded.length % 4)) % 4, '=')
 
     const binary = atob(base64)
-    if (binary.length !== 14) return null
+    if (binary.length !== 16) return null
 
-    const buffer = new ArrayBuffer(14)
+    const buffer = new ArrayBuffer(16)
     const view = new DataView(buffer)
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 16; i++) {
       view.setUint8(i, binary.charCodeAt(i))
     }
 
-    // Decode 6 boundaries
+    // Decode 7 boundaries
     const boundaries: number[] = []
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 7; i++) {
       const raw = view.getUint16(i * 2, false)
       const hue = raw / 10 // convert back from tenths
       if (hue < 0 || hue > 360) return null
@@ -69,12 +69,12 @@ export function decodeResult(encoded: string): TestResult | null {
     }
 
     // Decode mode
-    const modeByte = view.getUint8(12)
+    const modeByte = view.getUint8(14)
     if (modeByte !== 0 && modeByte !== 1) return null
     const mode: 'normal' | 'refine' = modeByte === 1 ? 'refine' : 'normal'
 
     // Decode locale
-    const localeByte = view.getUint8(13)
+    const localeByte = view.getUint8(15)
     const locale: Locale = LOCALE_MAP[localeByte] ?? 'en'
 
     return {

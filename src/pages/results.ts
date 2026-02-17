@@ -85,7 +85,7 @@ export function renderResults(container: HTMLElement): void {
     renderSpectrumBar(canvas, result.boundaries, {
       colorLabels: [
         t('colors.red'), t('colors.orange'), t('colors.yellow'),
-        t('colors.green'), t('colors.blue'), t('colors.violet'),
+        t('colors.green'), t('colors.blue'), t('colors.violet'), t('colors.pink'),
       ],
     })
   })

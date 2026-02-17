@@ -5,21 +5,21 @@ describe('spectrum bar label positioning', () => {
   it('verifies label midpoints fall in correct color regions', () => {
     // Use standard boundaries for this test
     const boundaries = BOUNDARIES.map(b => b.standardHue)
-    // [18, 48, 78, 163, 258, 345]
+    // [18, 48, 78, 163, 258, 300, 345]
 
-    const colorLabels = ['Red', 'Orange', 'Yellow', 'Green', 'Blue', 'Violet']
-    const expectedColors: Array<'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'violet'> = [
+    const expectedColors: Array<'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'violet' | 'pink'> = [
       'red',
       'orange',
       'yellow',
       'green',
       'blue',
       'violet',
+      'pink',
     ]
 
     // Simulate the fixed drawColorLabels logic
-    for (let i = 0; i < 6; i++) {
-      const startHue = boundaries[(i + 5) % 6]
+    for (let i = 0; i < 7; i++) {
+      const startHue = boundaries[(i + 6) % 7]
       const endHue = boundaries[i]
 
       // Compute circular midpoint (simplified version of circularMidpoint)

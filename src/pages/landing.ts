@@ -137,6 +137,7 @@ function injectLandingStyles(): void {
         hsl(163, 100%, 50%),
         hsl(258, 100%, 50%),
         hsl(300, 100%, 50%),
+        hsl(330, 100%, 50%),
         hsl(360, 100%, 50%)
       );
       margin-bottom: 0.5rem;

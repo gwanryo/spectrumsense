@@ -2,7 +2,7 @@ import type { Deviation, ColorRegion, ResultSummary } from './types'
 import { BOUNDARIES, circularDistance, normalizeHue } from './color'
 
 /**
- * Compute signed deviations between user's 6 boundary values and standard values.
+ * Compute signed deviations between user's boundary values and standard values.
  * Positive = shifted clockwise, negative = shifted counter-clockwise.
  * Uses circular distance to handle the 0°/360° wrap-around correctly.
  */
@@ -25,7 +25,7 @@ export function computeDeviations(userBoundaries: number[]): Deviation[] {
 
 /**
  * Compute the hue ranges for each color based on user's perceived boundaries.
- * Returns 6 ColorRegion objects describing each color's span on the hue wheel.
+ * Returns ColorRegion objects describing each color's span on the hue wheel.
  * The regions collectively span 360°.
  */
 export function getColorRegions(userBoundaries: number[]): ColorRegion[] {
@@ -35,7 +35,7 @@ export function getColorRegions(userBoundaries: number[]): ColorRegion[] {
   for (let i = 0; i < BOUNDARIES.length; i++) {
     const boundary = BOUNDARIES[i]
     const startHue = normalized[i]
-    const endHue = normalized[(i + 1) % 6]
+    const endHue = normalized[(i + 1) % BOUNDARIES.length]
 
     // Compute span (handle wrap-around)
     let span = endHue - startHue

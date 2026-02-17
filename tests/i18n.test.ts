@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import en from '../src/i18n/en.json'
 import ko from '../src/i18n/ko.json'
 import ja from '../src/i18n/ja.json'
@@ -17,7 +17,7 @@ describe('i18n key parity', () => {
   })
 
   it('all locales have required color keys', () => {
-    const colorKeys = ['colors.red', 'colors.orange', 'colors.yellow', 'colors.green', 'colors.blue', 'colors.violet']
+    const colorKeys = ['colors.red', 'colors.orange', 'colors.yellow', 'colors.green', 'colors.blue', 'colors.violet', 'colors.pink']
     for (const key of colorKeys) {
       expect(en).toHaveProperty(key)
       expect(ko).toHaveProperty(key)
@@ -33,6 +33,10 @@ describe('i18n key parity', () => {
     expect(en['colors.violet']).toBe('Violet')
     expect(ko['colors.violet']).toBe('보라')
     expect(ja['colors.violet']).toBe('紫')
+
+    expect(en['colors.pink']).toBe('Pink')
+    expect(ko['colors.pink']).toBe('분홍')
+    expect(ja['colors.pink']).toBe('ピンク')
   })
 
   it('all locales have non-empty values', () => {

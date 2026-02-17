@@ -165,7 +165,7 @@ function drawBoundaryStats(
 ): void {
   const startX = 80
   const startY = 300
-  const colWidth = (CARD_WIDTH - 160) / 3
+  const colWidth = (CARD_WIDTH - 160) / 4
   const rowHeight = 80
 
   const colorNames: Record<string, Record<Locale, string>> = {
@@ -175,11 +175,12 @@ function drawBoundaryStats(
     green:  { en: 'Green',  ko: '\uCD08\uB85D', ja: '\u7DD1' },
     blue:   { en: 'Blue',   ko: '\uD30C\uB791', ja: '\u9752' },
     violet: { en: 'Violet', ko: '\uBCF4\uB77C', ja: '\u7D2B' },
+    pink:   { en: 'Pink',   ko: '\uBD84\uD64D', ja: '\u30D4\u30F3\u30AF' },
   }
 
   deviations.forEach((dev, i) => {
-    const col = i % 3
-    const row = Math.floor(i / 3)
+    const col = i % 4
+    const row = Math.floor(i / 4)
     const x = startX + col * colWidth
     const y = startY + row * rowHeight
 

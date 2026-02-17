@@ -6,11 +6,11 @@ export interface SpectrumBarOptions {
   barHeight?: number
 }
 
-const DEFAULT_COLOR_LABELS = ['Red', 'Orange', 'Yellow', 'Green', 'Blue', 'Violet']
+const DEFAULT_COLOR_LABELS = ['Red', 'Orange', 'Yellow', 'Green', 'Blue', 'Violet', 'Pink']
 
 /**
  * Render a linear spectrum bar onto a canvas element.
- * Shows user's 6 boundary markers vs standard boundary markers.
+ * Shows user's boundary markers vs standard boundary markers.
  * Applies devicePixelRatio for crisp retina rendering.
  */
 export function renderSpectrumBar(
@@ -168,8 +168,8 @@ function drawColorLabels(
 
   const normalized = userBoundaries.map(normalizeHue)
 
-  for (let i = 0; i < 6; i++) {
-    const startHue = normalized[(i + 5) % 6]
+  for (let i = 0; i < 7; i++) {
+    const startHue = normalized[(i + 6) % 7]
     const endHue = normalized[i]
 
     // circularMidpoint handles 0°/360° wrap (naive average fails at violet→red boundary)

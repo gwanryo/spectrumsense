@@ -3,14 +3,14 @@ import { encodeResult, decodeResult, buildShareUrl } from '../src/url-state'
 import type { TestResult } from '../src/types'
 
 const standardResult: TestResult = {
-  boundaries: [18, 48, 78, 163, 258, 345],
+  boundaries: [18, 48, 78, 163, 258, 300, 345],
   mode: 'normal',
   timestamp: 1000000,
   locale: 'en',
 }
 
 const refineResult: TestResult = {
-  boundaries: [20, 50, 80, 165, 260, 340],
+  boundaries: [20, 50, 80, 165, 260, 305, 340],
   mode: 'refine',
   timestamp: 2000000,
   locale: 'ko',
@@ -43,7 +43,7 @@ describe('decodeResult', () => {
     expect(decoded).not.toBeNull()
     expect(decoded!.mode).toBe('normal')
     expect(decoded!.locale).toBe('en')
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 7; i++) {
       expect(decoded!.boundaries[i]).toBeCloseTo(standardResult.boundaries[i], 0)
     }
   })
@@ -54,14 +54,14 @@ describe('decodeResult', () => {
     expect(decoded).not.toBeNull()
     expect(decoded!.mode).toBe('refine')
     expect(decoded!.locale).toBe('ko')
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 7; i++) {
       expect(decoded!.boundaries[i]).toBeCloseTo(refineResult.boundaries[i], 0)
     }
   })
 
-  it('round-trips extreme values [0, 1, 179, 180, 359, 0]', () => {
+  it('round-trips extreme values [0, 1, 179, 180, 359, 300, 0]', () => {
     const extremeResult: TestResult = {
-      boundaries: [0, 1, 179, 180, 359, 0],
+      boundaries: [0, 1, 179, 180, 359, 300, 0],
       mode: 'normal',
       timestamp: 0,
       locale: 'ja',
@@ -70,9 +70,15 @@ describe('decodeResult', () => {
     const decoded = decodeResult(encoded)
     expect(decoded).not.toBeNull()
     expect(decoded!.locale).toBe('ja')
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 7; i++) {
       expect(decoded!.boundaries[i]).toBeCloseTo(extremeResult.boundaries[i], 0)
     }
+  })
+
+  it('encodes as 16-byte payload', () => {
+    const encoded = encodeResult(standardResult)
+    const binary = atob(encoded.replace(/-/g, '+').replace(/_/g, '/').padEnd(24, '='))
+    expect(binary.length).toBe(16)
   })
 
   it('returns null for empty string', () => {
