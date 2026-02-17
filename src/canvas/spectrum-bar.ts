@@ -169,8 +169,8 @@ function drawColorLabels(
   const normalized = userBoundaries.map(normalizeHue)
 
   for (let i = 0; i < 6; i++) {
-    const startHue = normalized[i]
-    const endHue = normalized[(i + 1) % 6]
+    const startHue = normalized[(i + 5) % 6]
+    const endHue = normalized[i]
 
     // circularMidpoint handles 0°/360° wrap (naive average fails at violet→red boundary)
     const midHue = circularMidpoint(startHue, endHue)
