@@ -7,7 +7,7 @@ import type { TestResult, Locale } from './types'
 // Total: 14 bytes → ~19 chars Base64URL
 
 const LOCALE_MAP: Locale[] = ['en', 'ko', 'ja']
-const BASE_URL = 'https://USERNAME.github.io/spectrumsense/'
+const BASE_URL = 'https://gwanryo.github.io/spectrumsense/'
 
 /** Encode a TestResult into a compact Base64URL string */
 export function encodeResult(result: TestResult): string {
