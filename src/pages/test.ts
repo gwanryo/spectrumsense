@@ -30,19 +30,21 @@ export function renderTest(
   injectTestStyles()
 
   container.innerHTML = `
-    <div class="test-page" id="test-page-root">
-      <div class="test-progress-bar-container test-overlay" id="test-progress-container">
-        <div class="test-progress-text" id="test-progress-text"></div>
-        <div class="progress-bar">
-          <div class="progress-bar-fill" id="test-progress-fill"></div>
+    <div class="test-page-wrapper">
+      <div class="test-page" id="test-page-root">
+        <div class="test-progress-bar-container test-overlay" id="test-progress-container">
+          <div class="test-progress-text" id="test-progress-text"></div>
+          <div class="progress-bar">
+            <div class="progress-bar-fill" id="test-progress-fill"></div>
+          </div>
         </div>
-      </div>
 
-      <div class="test-buttons-container" id="test-buttons-container">
-        <p class="test-instruction test-overlay" id="test-instruction">${t('test.instruction')}</p>
-        <div class="test-choices">
-          <button class="test-choice-btn" id="btn-first" type="button"></button>
-          <button class="test-choice-btn" id="btn-second" type="button"></button>
+        <div class="test-buttons-container" id="test-buttons-container">
+          <p class="test-instruction test-overlay" id="test-instruction">${t('test.instruction')}</p>
+          <div class="test-choices">
+            <button class="test-choice-btn" id="btn-first" type="button"></button>
+            <button class="test-choice-btn" id="btn-second" type="button"></button>
+          </div>
         </div>
       </div>
     </div>
@@ -114,9 +116,20 @@ function injectTestStyles(): void {
   const style = document.createElement('style')
   style.id = styleId
   style.textContent = `
-    .test-page {
+    .test-page-wrapper {
       position: fixed;
       inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--bg-primary, #0a0a0f);
+      overflow: hidden;
+    }
+
+    .test-page {
+      width: 80%;
+      height: 80%;
+      border-radius: var(--radius-lg, 20px);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -167,6 +180,12 @@ function injectTestStyles(): void {
     }
 
     @media (max-width: 375px) {
+      .test-page {
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+      }
+
       .test-choices {
         flex-direction: column;
         max-width: 100%;
