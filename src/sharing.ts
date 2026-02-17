@@ -16,7 +16,7 @@ export function shareTwitter(result: TestResult): void {
     url: shareUrl,
   })
 
-  const intentUrl = `https://twitter.com/intent/tweet?${params.toString()}`
+   const intentUrl = `https://x.com/intent/post?${params.toString()}`
   window.open(intentUrl, '_blank', 'width=550,height=420,noopener,noreferrer')
 }
 
