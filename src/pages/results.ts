@@ -169,7 +169,10 @@ function wireButtons(
   })
 
   container.querySelector('#btn-webshare')?.addEventListener('click', async () => {
-    await shareWebApi(result)
+    const shareResult = await shareWebApi(result)
+    if (shareResult === 'copied') {
+      showToast(container)
+    }
   })
 
   container.querySelector('#btn-download')?.addEventListener('click', () => {

@@ -3,29 +3,64 @@ import { buildShareUrl } from './url-state'
 import { computeDeviations } from './result'
 import { t } from './i18n/index'
 
-export async function shareWebApi(result: TestResult): Promise<boolean> {
-  if (!isWebShareSupported()) return false
+export type ShareResult = 'shared' | 'copied' | 'cancelled' | 'failed'
+
+export async function shareWebApi(result: TestResult): Promise<ShareResult> {
+  if (!isWebShareSupported()) return 'failed'
 
   const shareUrl = buildShareUrl(result)
   const deviations = computeDeviations(result.boundaries)
   const meanDeviation = Math.round(
     deviations.reduce((sum, d) => sum + Math.abs(d.difference), 0) / deviations.length
   )
+  const shareTitle = t('share.title')
+  const shareDescription = t('share.description', { deviation: meanDeviation })
+  const isMobile = isLikelyMobileDevice()
+
+  if (isWindowsDesktop()) {
+    const copied = await copyToClipboard(`${shareDescription}\n${shareUrl}`)
+    return copied ? 'copied' : 'failed'
+  }
 
   try {
-    await navigator.share({
-      title: t('share.title'),
-      text: t('share.description', { deviation: meanDeviation }),
-      url: shareUrl,
-    })
-    return true
+    if (isMobile) {
+      await navigator.share({
+        title: shareTitle,
+        text: shareDescription,
+        url: shareUrl,
+      })
+    } else {
+      await navigator.share({
+        title: shareTitle,
+        text: `${shareDescription}\n${shareUrl}`,
+      })
+    }
+    return 'shared'
   } catch (err) {
     // User cancelled or share failed
     if (err instanceof Error && err.name === 'AbortError') {
-      return false
+      return 'cancelled'
     }
-    return false
+    return 'failed'
   }
+}
+
+function isLikelyMobileDevice(): boolean {
+  if (typeof navigator === 'undefined') return false
+
+  const ua = navigator.userAgent
+  if (/Android|iPhone|iPad|iPod|Mobile/i.test(ua)) {
+    return true
+  }
+
+  return /Macintosh/i.test(ua) && navigator.maxTouchPoints > 1
+}
+
+function isWindowsDesktop(): boolean {
+  if (typeof navigator === 'undefined') return false
+
+  const ua = navigator.userAgent
+  return /Windows/i.test(ua) && !isLikelyMobileDevice()
 }
 
 /**
