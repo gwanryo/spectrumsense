@@ -8,12 +8,13 @@ import {
   getTestResults,
   isTestComplete,
 } from '../src/state-machine'
+import type { TestResult, TestState } from '../src/types'
 
 function runFullTest(
   mode: 'normal' | 'refine',
-  previousResults?: any,
+  previousResults?: TestResult,
   alwaysTrue = true
-): { count: number; results: any; state: any } {
+): { count: number; results: TestResult; state: TestState } {
   let state = createTestSession(mode, 'en', previousResults)
   let count = 0
 
@@ -125,6 +126,12 @@ describe('answerQuestion', () => {
   it('eventually reaches complete phase', () => {
     const { state } = runFullTest('normal')
     expect(state.phase).toBe('complete')
+  })
+
+  it('does not mutate a completed session', () => {
+    const { state } = runFullTest('normal')
+    const after = answerQuestion(state, true)
+    expect(after).toEqual(state)
   })
 })
 

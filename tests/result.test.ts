@@ -65,6 +65,16 @@ describe('computeDeviations', () => {
     expect(deviations[5].boundary.from).toBe('violet')
     expect(deviations[6].boundary.from).toBe('pink')
   })
+
+  it('falls back to standard hues when input has fewer than 7 boundaries', () => {
+    const partial = [20, 50]
+    const deviations = computeDeviations(partial)
+    expect(deviations).toHaveLength(7)
+    expect(deviations[0].userHue).toBe(20)
+    expect(deviations[1].userHue).toBe(50)
+    expect(deviations[2].userHue).toBe(BOUNDARIES[2].standardHue)
+    expect(deviations[6].userHue).toBe(BOUNDARIES[6].standardHue)
+  })
 })
 
 describe('getColorRegions', () => {
@@ -91,6 +101,14 @@ describe('getColorRegions', () => {
     const regions = getColorRegions(shifted)
     const totalSpan = regions.reduce((sum, r) => sum + r.spanDegrees, 0)
     expect(totalSpan).toBeCloseTo(360, 0)
+  })
+
+  it('keeps zero-width region when adjacent boundaries are equal', () => {
+    const withDuplicate = [18, 18, 78, 163, 258, 300, 345]
+    const regions = getColorRegions(withDuplicate)
+    expect(regions[0].spanDegrees).toBeCloseTo(0, 5)
+    const totalSpan = regions.reduce((sum, r) => sum + r.spanDegrees, 0)
+    expect(totalSpan).toBeCloseTo(360, 5)
   })
 })
 

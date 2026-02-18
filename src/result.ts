@@ -39,7 +39,7 @@ export function getColorRegions(userBoundaries: number[]): ColorRegion[] {
 
     // Compute span (handle wrap-around)
     let span = endHue - startHue
-    if (span <= 0) span += 360
+    if (span < 0) span += 360
 
     regions.push({
       name: boundary.to, // The color that starts at this boundary

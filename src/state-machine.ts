@@ -115,6 +115,10 @@ export function getCurrentQuestion(state: TestState): Question {
 }
 
 export function answerQuestion(state: TestState, choseFirst: boolean): TestState {
+  if (state.phase === 'complete') {
+    return state
+  }
+
   if (state.phase === 'catch_trial') {
     return answerCatchTrial(state, choseFirst)
   }
