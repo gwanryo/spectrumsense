@@ -12,6 +12,9 @@
   "test.instruction": "이 색은 어느 쪽에 더 가깝나요?",
   "test.progress": "{total}문항 중 {n}번째",
   "test.quit": "종료",
+  "test.complete_title": "테스트 완료!",
+  "test.see_results": "결과 보기",
+  "test.refine_prompt": "더 정밀하게 측정하시겠어요?",
 
   "colors.red": "빨강",
   "colors.orange": "주황",

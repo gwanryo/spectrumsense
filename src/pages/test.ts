@@ -58,12 +58,36 @@ export function renderTest(
 
   document.body.style.overflow = 'hidden'
 
+  function showConfirmationScreen(results: TestResult): void {
+    const encoded = encodeResult(results)
+
+    container.innerHTML = `
+      <div class="test-page-wrapper">
+        <div class="test-confirmation">
+          <h1 class="test-confirmation-title">${t('test.complete_title')}</h1>
+          <p class="test-confirmation-prompt">${t('test.refine_prompt')}</p>
+          <div class="test-confirmation-actions">
+            <button class="test-confirmation-btn test-confirmation-btn-primary" id="btn-see-results">${t('test.see_results')}</button>
+            <button class="test-confirmation-btn test-confirmation-btn-secondary" id="btn-refine">${t('results.refine')}</button>
+          </div>
+        </div>
+      </div>
+    `
+
+    container.querySelector<HTMLButtonElement>('#btn-see-results')!.addEventListener('click', () => {
+      navigateTo('results', { r: encoded })
+    })
+
+    container.querySelector<HTMLButtonElement>('#btn-refine')!.addEventListener('click', () => {
+      renderTest(container, 'refine', results)
+    })
+  }
+
   function updateDisplay(): void {
     if (isTestComplete(state)) {
       document.body.style.overflow = ''
       const results = getTestResults(state, locale)
-      const encoded = encodeResult(results)
-      navigateTo('results', { r: encoded })
+      showConfirmationScreen(results)
       return
     }
 
@@ -177,6 +201,72 @@ function injectTestStyles(): void {
 
     .test-choices .test-choice-btn {
       flex: 1;
+    }
+
+    .test-confirmation {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      padding: 2rem;
+      text-align: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    .test-confirmation-title {
+      font-size: 2.25rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0;
+      letter-spacing: -0.02em;
+    }
+
+    .test-confirmation-prompt {
+      font-size: 1rem;
+      color: rgba(255, 255, 255, 0.55);
+      margin: 0;
+      max-width: 320px;
+      line-height: 1.5;
+    }
+
+    .test-confirmation-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      width: 100%;
+      max-width: 300px;
+      margin-top: 0.5rem;
+    }
+
+    .test-confirmation-btn {
+      padding: 0.9375rem 1.5rem;
+      border-radius: var(--radius-md, 12px);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s ease;
+    }
+
+    .test-confirmation-btn:active {
+      opacity: 0.85;
+    }
+
+    .test-confirmation-btn-primary {
+      background: #ffffff;
+      color: var(--bg-primary, #0a0a0f);
+    }
+
+    .test-confirmation-btn-secondary {
+      background: transparent;
+      color: rgba(255, 255, 255, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .test-confirmation-btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.05);
     }
 
     @media (max-width: 375px) {

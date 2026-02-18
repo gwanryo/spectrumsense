@@ -12,6 +12,9 @@
   "test.instruction": "この色はどちらに近いですか？",
   "test.progress": "{total}問中 {n}問目",
   "test.quit": "終了",
+  "test.complete_title": "テスト完了!",
+  "test.see_results": "結果を見る",
+  "test.refine_prompt": "より精密に測定しますか？",
 
   "colors.red": "赤",
   "colors.orange": "橙",

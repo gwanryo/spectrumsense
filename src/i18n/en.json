@@ -12,6 +12,9 @@
   "test.instruction": "Which color is this closer to?",
   "test.progress": "Question {n} of {total}",
   "test.quit": "Quit",
+  "test.complete_title": "Test Complete!",
+  "test.see_results": "See My Results",
+  "test.refine_prompt": "Want more precision? Refine your boundaries.",
 
   "colors.red": "Red",
   "colors.orange": "Orange",
