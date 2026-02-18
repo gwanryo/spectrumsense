@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    background: #0a0a0f;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    position: relative;
+  }
+
+  /* Subtle purple radial glow */
+  .glow {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse 800px 400px at 50% 55%, rgba(108, 92, 231, 0.09) 0%, transparent 100%),
+      linear-gradient(135deg, rgba(108, 92, 231, 0.06) 0%, transparent 50%, rgba(108, 92, 231, 0.03) 100%);
+  }
+
+  /* Noise texture overlay */
+  .noise {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    background-size: 256px 256px;
+  }
+
+  /* Border */
+  .border-frame {
+    position: absolute;
+    top: 1px; left: 1px; right: 1px; bottom: 1px;
+    border: 2px solid #2a2a3e;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  /* Content layout */
+  .content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Title */
+  .title {
+    color: #e8e8f0;
+    font-size: 72px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  /* Accent line under title */
+  .accent-line {
+    width: 340px;
+    height: 3px;
+    margin-bottom: 52px;
+    background: linear-gradient(90deg,
+      rgba(108, 92, 231, 0) 0%,
+      rgba(108, 92, 231, 0.5) 15%,
+      #6c5ce7 50%,
+      rgba(108, 92, 231, 0.5) 85%,
+      rgba(108, 92, 231, 0) 100%
+    );
+  }
+
+  /* Spectrum bar container */
+  .spectrum-wrap {
+    position: relative;
+    width: 1080px;
+    padding: 0;
+  }
+
+  .spectrum-bar {
+    width: 100%;
+    height: 80px;
+    border-radius: 12px;
+    background: linear-gradient(90deg,
+      hsl(0, 100%, 50%) 0%,
+      hsl(15, 100%, 50%) 4.17%,
+      hsl(30, 100%, 50%) 8.33%,
+      hsl(45, 100%, 50%) 12.5%,
+      hsl(60, 100%, 50%) 16.67%,
+      hsl(75, 100%, 50%) 20.83%,
+      hsl(90, 100%, 50%) 25%,
+      hsl(105, 100%, 50%) 29.17%,
+      hsl(120, 100%, 50%) 33.33%,
+      hsl(135, 100%, 50%) 37.5%,
+      hsl(150, 100%, 50%) 41.67%,
+      hsl(165, 100%, 50%) 45.83%,
+      hsl(180, 100%, 50%) 50%,
+      hsl(195, 100%, 50%) 54.17%,
+      hsl(210, 100%, 50%) 58.33%,
+      hsl(225, 100%, 50%) 62.5%,
+      hsl(240, 100%, 50%) 66.67%,
+      hsl(255, 100%, 50%) 70.83%,
+      hsl(270, 100%, 50%) 75%,
+      hsl(285, 100%, 50%) 79.17%,
+      hsl(300, 100%, 50%) 83.33%,
+      hsl(315, 100%, 50%) 87.5%,
+      hsl(330, 100%, 50%) 91.67%,
+      hsl(345, 100%, 50%) 95.83%,
+      hsl(360, 100%, 50%) 100%
+    );
+    box-shadow:
+      0 8px 50px rgba(108, 92, 231, 0.25),
+      0 2px 20px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+  }
+
+  /* Glossy overlay on spectrum */
+  .spectrum-bar::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 40%;
+    border-radius: 12px 12px 0 0;
+    background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.14) 0%,
+      rgba(255, 255, 255, 0.04) 60%,
+      transparent 100%
+    );
+  }
+
+  /* Boundary tick marks */
+  .ticks {
+    position: absolute;
+    top: -8px;
+    left: 0;
+    right: 0;
+    height: calc(100% + 16px);
+    pointer-events: none;
+  }
+
+  .tick {
+    position: absolute;
+    top: 0;
+    width: 1px;
+    height: 100%;
+    background: repeating-linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.22) 0px,
+      rgba(255, 255, 255, 0.22) 3px,
+      transparent 3px,
+      transparent 6px
+    );
+  }
+
+  .tick-30  { left: 8.33%; }
+  .tick-60  { left: 16.67%; }
+  .tick-120 { left: 33.33%; }
+  .tick-240 { left: 66.67%; }
+  .tick-270 { left: 75%; }
+  .tick-330 { left: 91.67%; }
+
+  /* Color labels */
+  .labels {
+    display: flex;
+    width: 100%;
+    margin-top: 10px;
+    position: relative;
+    height: 20px;
+  }
+
+  .label {
+    position: absolute;
+    transform: translateX(-50%);
+    color: #606078;
+    font-size: 12px;
+    font-weight: 400;
+  }
+
+  .label-red    { left: 0%; }
+  .label-orange { left: 8.33%; }
+  .label-yellow { left: 16.67%; }
+  .label-green  { left: 33.33%; }
+  .label-blue   { left: 66.67%; }
+  .label-violet { left: 75%; }
+  .label-pink   { left: 91.67%; }
+
+  /* Subtitle */
+  .subtitle {
+    color: #9090a8;
+    font-size: 24px;
+    font-weight: 400;
+    margin-top: 42px;
+    text-align: center;
+  }
+
+  /* Footer */
+  .footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0 80px 26px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1;
+  }
+
+  .footer::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 60px;
+    right: 60px;
+    height: 1px;
+    background: linear-gradient(90deg,
+      rgba(42, 42, 62, 0) 0%,
+      #2a2a3e 15%,
+      #2a2a3e 85%,
+      rgba(42, 42, 62, 0) 100%
+    );
+  }
+
+  .footer-left {
+    color: #606078;
+    font-size: 16px;
+  }
+
+  .footer-right {
+    color: #606078;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+  <div class="glow"></div>
+  <div class="noise"></div>
+  <div class="border-frame"></div>
+
+  <div class="content">
+    <div class="title">SpectrumSense</div>
+    <div class="accent-line"></div>
+
+    <div class="spectrum-wrap">
+      <div class="spectrum-bar">
+        <div class="ticks">
+          <div class="tick tick-30"></div>
+          <div class="tick tick-60"></div>
+          <div class="tick tick-120"></div>
+          <div class="tick tick-240"></div>
+          <div class="tick tick-270"></div>
+          <div class="tick tick-330"></div>
+        </div>
+      </div>
+      <div class="labels">
+        <span class="label label-red">Red</span>
+        <span class="label label-orange">Orange</span>
+        <span class="label label-yellow">Yellow</span>
+        <span class="label label-green">Green</span>
+        <span class="label label-blue">Blue</span>
+        <span class="label label-violet">Violet</span>
+        <span class="label label-pink">Pink</span>
+      </div>
+    </div>
+
+    <div class="subtitle">Discover Your Color Perception Boundaries</div>
+  </div>
+
+  <div class="footer">
+    <span class="footer-left">rwe.kr/spectrumsense</span>
+    <span class="footer-right">Test your color perception</span>
+  </div>
+</body>
+</html>
