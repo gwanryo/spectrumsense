@@ -427,6 +427,11 @@ function injectResultsStyles(): void {
       flex-wrap: wrap;
     }
 
+    .actions-primary .btn-primary,
+    .actions-primary .btn-secondary {
+      border-radius: var(--radius-lg);
+    }
+
     .actions-share {
       display: flex;
       gap: 0.625rem;

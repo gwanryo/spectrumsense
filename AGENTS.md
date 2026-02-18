@@ -103,6 +103,7 @@ tests/
 ### 결과 페이지 레이아웃
 - **섹션 순서**: 스펙트럼 바 → 편차 카드 그리드 → disclaimer → 액션 버튼 → 레퍼런스 푸터
 - **Refine 버튼**: `result.mode !== 'refine'`일 때만 렌더링 (test.ts 확인 화면 + results.ts 모두)
+- **Primary 액션 버튼 반경 통일**: 결과 페이지의 `.actions-primary`에서 `.btn-primary`(Refine)와 `.btn-secondary`(Retake)를 모두 `var(--radius-lg)`로 오버라이드해 동일한 라운드 유지
 - **typical value 스타일**: `--text-primary` + `opacity: 0.55` — user value와 구분하면서 가독성 확보
 
 ### 결과 카드 이미지 (result-card.ts)
@@ -153,6 +154,7 @@ npx tsc --noEmit   # 타입 체크만
 - **result.ts `% 6` 하드코딩**: `normalized[(i + 1) % 6]` → `% BOUNDARIES.length`로 수정 필요했음
 - **Red 라벨 캔버스 클리핑**: Red(≈1.5°)가 캔버스 좌측 끝에서 잘림 → `drawColorLabels()`에 `pillW/2` 기반 x좌표 클램핑 추가로 수정
 - **Refine 무한 반복 버그**: `showConfirmationScreen()`과 results.ts에서 mode 체크 없이 항상 Refine 버튼 렌더링 → `result.mode !== 'refine'` 조건 추가로 1회만 허용
+- **결과 액션 버튼 라운드 불일치**: `results.ts`에서 Refine은 `.btn-primary`(`--radius-lg`), Retake는 `.btn-secondary`(`--radius-md`)라 시각적 불일치 발생 → `.actions-primary` 컨텍스트에서 두 버튼 반경을 `var(--radius-lg)`로 통일
 - **결과 카드 배경 투명화**: `drawMiniSpectrumBar()`에서 `globalCompositeOperation = 'destination-in'`으로 스펙트럼 바 둥근 모서리 처리 → 캔버스 전체 비트맵이 바 영역만 남고 투명화됨. `save()/restore()`는 composite mode만 복원하고 비트맵 파괴는 되돌리지 않음. 수정: `clip()` 기반 클리핑으로 교체
 
 ### macOS 환경 이슈
