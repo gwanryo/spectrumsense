@@ -48,13 +48,14 @@ src/
 ### Test Structure
 ```
 tests/
-├── color.test.ts         # BOUNDARIES, getColorName, circularMidpoint (21 tests)
-├── binary-search.test.ts # 수렴 테스트, 7개 경계 (21 tests)
-├── state-machine.test.ts # 상태 전이, 셔플, 캐치 트라이얼 (23 tests)
-├── url-state.test.ts     # 인코딩/디코딩 round-trip (13 tests)
-├── result.test.ts        # 편차/영역 계산 (13 tests)
-├── i18n.test.ts          # 3개 로케일 키 일치 검증 (9 tests)
-└── spectrum-bar.test.ts  # 라벨 위치 정확성 (1 test)
+├── color.test.ts         # BOUNDARIES, getColorName, circular math (22 tests)
+├── binary-search.test.ts # 수렴 테스트, 7개 경계, 완료 이후 입력 무시 (22 tests)
+├── state-machine.test.ts # 상태 전이, 셔플, 캐치 트라이얼, complete 가드 (24 tests)
+├── url-state.test.ts     # 인코딩/디코딩 round-trip + invalid mode/length (16 tests)
+├── result.test.ts        # 편차/영역 계산 + 동일 경계 span 케이스 (15 tests)
+├── i18n.test.ts          # 키 일치 + runtime locale/placeholder 동작 (16 tests)
+├── spectrum-bar.test.ts  # computeMarkerOffsets 동작/래핑 검증 (4 tests)
+└── router.test.ts        # hash parsing 및 navigateTo 파라미터 검증 (6 tests)
 ```
 
 ## Key Design Decisions
@@ -117,7 +118,7 @@ tests/
 
 ## Critical Invariants (절대 깨뜨리면 안 되는 것)
 
-1. **i18n 키 일치**: `tests/i18n.test.ts`가 en/ko/ja 3개 파일의 키 일치를 강제 검증
+1. **i18n 키 일치**: `tests/i18n.test.ts`가 en/ko/ja 3개 파일의 키 일치를 강제 검증 (추가로 runtime locale 동작도 검증)
 2. **경계 개수**: `BOUNDARIES.length`를 동적으로 사용하는 곳(state-machine, binary-search)은 건드리지 않음
 3. **URL 바이트 포맷**: 16바이트 고정. 변경 시 기존 공유 링크 전부 깨짐
 4. **vite.config.ts base**: `/spectrumsense/` 고정. GitHub Pages 경로와 일치해야 함
@@ -128,7 +129,7 @@ tests/
 
 ```bash
 npm run dev        # 개발 서버 (localhost:5173)
-npm test           # vitest run (101 tests)
+npm test           # vitest run (125 tests)
 npm run test:watch # vitest watch mode
 npm run build      # tsc && vite build
 npm run preview    # 빌드 결과물 프리뷰 서버
