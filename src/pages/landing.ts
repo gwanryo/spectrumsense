@@ -39,24 +39,6 @@ export function renderLanding(
 
         <section class="landing-info">
           <div class="landing-info-inner">
-            <div class="landing-section">
-              <h2 class="landing-section-title">${t('landing.how_title')}</h2>
-              <div class="landing-steps">
-                <div class="landing-step">
-                  <span class="landing-step-num">1</span>
-                  <p class="landing-step-text">${t('landing.how_step1')}</p>
-                </div>
-                <div class="landing-step">
-                  <span class="landing-step-num">2</span>
-                  <p class="landing-step-text">${t('landing.how_step2')}</p>
-                </div>
-                <div class="landing-step">
-                  <span class="landing-step-num">3</span>
-                  <p class="landing-step-text">${t('landing.how_step3')}</p>
-                </div>
-              </div>
-            </div>
-
             <div class="landing-details">
               <div class="landing-detail">
                 <h3 class="landing-detail-title">${t('landing.boundaries_title')}</h3>
@@ -300,58 +282,6 @@ function injectLandingStyles(): void {
       display: flex;
       flex-direction: column;
       gap: 3rem;
-    }
-
-    .landing-section-title {
-      font-family: var(--font-display);
-      font-size: 1.5rem;
-      color: var(--text-primary);
-      margin-bottom: 1.5rem;
-      text-align: center;
-    }
-
-    .landing-steps {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    .landing-step {
-      display: flex;
-      align-items: flex-start;
-      gap: 1rem;
-      padding: 1rem 1.25rem;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      transition: border-color var(--transition-normal);
-    }
-
-    .landing-step:hover {
-      border-color: var(--border-accent);
-    }
-
-    .landing-step-num {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: rgba(45, 212, 191, 0.1);
-      color: var(--accent);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.8125rem;
-      font-weight: 600;
-      font-family: var(--font-mono);
-      flex-shrink: 0;
-    }
-
-    .landing-step-text {
-      font-size: 0.9375rem;
-      color: var(--text-secondary);
-      line-height: 1.6;
-      font-weight: 300;
-      margin: 0;
     }
 
     .landing-details {

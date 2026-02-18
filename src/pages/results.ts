@@ -374,6 +374,7 @@ function injectResultsStyles(): void {
       gap: 0.75rem;
       font-size: 0.6875rem;
       color: var(--text-muted);
+      margin-top: 2.5rem;
       margin-bottom: 2rem;
       padding-top: 1rem;
       border-top: 1px solid var(--border);

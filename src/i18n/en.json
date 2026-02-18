@@ -32,6 +32,7 @@
   "test.real_test_title": "Practice Complete",
   "test.real_test_message": "The real test begins now. Your responses will be recorded.",
   "test.real_test_start": "Begin",
+  "test.how_note": "Question count may increase slightly based on your response patterns.",
 
   "colors.red": "Red",
   "colors.orange": "Orange",

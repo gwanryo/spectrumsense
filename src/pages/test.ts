@@ -54,6 +54,19 @@ function showEnvironmentCheck(
           <li>${t('test.env_nightmode')}</li>
           <li>${t('test.env_lighting')}</li>
         </ul>
+
+        <div class="test-env-divider"></div>
+
+        <div class="test-env-how">
+          <h3 class="test-env-how-title">${t('landing.how_title')}</h3>
+          <ol class="test-env-how-steps">
+            <li>${t('landing.how_step1')}</li>
+            <li>${t('landing.how_step2')}</li>
+            <li>${t('landing.how_step3')}</li>
+          </ol>
+          <p class="test-env-how-note">${t('test.how_note')}</p>
+        </div>
+
         <button class="test-confirmation-btn test-confirmation-btn-primary" id="btn-env-ready">
           ${t('test.env_ready')}
         </button>
@@ -337,12 +350,13 @@ function injectTestStyles(): void {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: safe center;
       gap: 2rem;
       padding: 2rem;
       text-align: center;
       width: 100%;
       height: 100%;
+      overflow-y: auto;
       animation: fadeIn 0.5s ease both;
     }
 
@@ -370,6 +384,69 @@ function injectTestStyles(): void {
     .test-env-list li::before {
       content: '→ ';
       color: rgba(255, 255, 255, 0.3);
+    }
+
+    .test-env-divider {
+      width: 40px;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .test-env-how {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      max-width: 440px;
+    }
+
+    .test-env-how-title {
+      font-family: var(--font-sans, 'Outfit', sans-serif);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.35);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 0;
+    }
+
+    .test-env-how-steps {
+      list-style: none;
+      counter-reset: how-step;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.875rem;
+      font-weight: 300;
+      line-height: 1.6;
+      text-align: left;
+    }
+
+    .test-env-how-steps li {
+      counter-increment: how-step;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .test-env-how-steps li::before {
+      content: counter(how-step) '.';
+      color: rgba(255, 255, 255, 0.2);
+      font-family: var(--font-mono, 'JetBrains Mono', monospace);
+      font-size: 0.75rem;
+      flex-shrink: 0;
+      min-width: 1.25rem;
+      padding-top: 0.1rem;
+    }
+
+    .test-env-how-note {
+      font-size: 0.8125rem;
+      color: rgba(255, 255, 255, 0.3);
+      font-weight: 300;
+      margin: 0;
+      font-style: italic;
     }
 
     .test-confirmation {

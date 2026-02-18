@@ -32,6 +32,7 @@
   "test.real_test_title": "練習完了",
   "test.real_test_message": "本テストを開始します。ここからの回答が記録されます。",
   "test.real_test_start": "開始",
+  "test.how_note": "回答パターンによって問題数がわずかに増えることがあります。",
 
   "colors.red": "赤",
   "colors.orange": "橙",

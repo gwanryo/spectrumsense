@@ -217,35 +217,43 @@ function drawLegend(
   height: number
 ): void {
   ctx.save()
-  ctx.font = '10px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+  ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
   ctx.textBaseline = 'middle'
 
-  const legendY = height - 12
+  const legendY = height - 14
 
+  ctx.fillStyle = 'rgba(6, 6, 12, 0.5)'
+  ctx.beginPath()
+  ctx.roundRect(4, legendY - 12, width - 8, 24, 8)
+  ctx.fill()
+
+  const triX = 16
   ctx.fillStyle = '#ffffff'
   ctx.beginPath()
-  ctx.moveTo(8, legendY)
-  ctx.lineTo(8 - 4, legendY - 6)
-  ctx.lineTo(8 + 4, legendY - 6)
+  ctx.moveTo(triX, legendY + 2)
+  ctx.lineTo(triX - 5, legendY - 7)
+  ctx.lineTo(triX + 5, legendY - 7)
   ctx.closePath()
   ctx.fill()
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.85)'
-  ctx.textAlign = 'left'
-  ctx.fillText('Your boundaries', 18, legendY)
 
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.92)'
+  ctx.textAlign = 'left'
+  ctx.fillText('Your boundaries', triX + 12, legendY - 2)
+
+  const typicalTextX = width - 114
   ctx.save()
-  ctx.strokeStyle = 'rgba(45, 212, 191, 0.7)'
-  ctx.lineWidth = 2
-  ctx.setLineDash([4, 3])
+  ctx.strokeStyle = 'rgba(45, 212, 191, 0.85)'
+  ctx.lineWidth = 2.5
+  ctx.setLineDash([5, 3])
   ctx.beginPath()
-  ctx.moveTo(width - 130, legendY)
-  ctx.lineTo(width - 116, legendY)
+  ctx.moveTo(typicalTextX - 24, legendY - 2)
+  ctx.lineTo(typicalTextX - 6, legendY - 2)
   ctx.stroke()
   ctx.restore()
 
-  ctx.fillStyle = 'rgba(45, 212, 191, 0.9)'
+  ctx.fillStyle = 'rgba(45, 212, 191, 1)'
   ctx.textAlign = 'left'
-  ctx.fillText('Typical boundaries', width - 112, legendY)
+  ctx.fillText('Typical boundaries', typicalTextX, legendY - 2)
 
   ctx.restore()
 }
