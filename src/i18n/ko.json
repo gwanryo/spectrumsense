@@ -39,13 +39,11 @@
    "results.refine": "정밀 측정 (+21문항)",
   "results.retake": "다시 테스트",
   "results.share": "공유",
-  "results.share_twitter": "X(트위터)에 공유",
   "results.copy_link": "링크 복사",
   "results.copied": "링크가 복사되었습니다!",
   "results.web_share": "공유하기",
   "results.download": "이미지 저장",
 
-  "share.tweet": "스펙트럼센스로 나만의 색상 경계를 발견했어요! 빨강↔주황 경계가 {ro}°에 있네요. 직접 해보세요:",
   "share.title": "나의 스펙트럼센스 결과",
   "share.description": "내가 색상 경계를 어디서 인식하는지 확인해보세요.",
 

@@ -3,7 +3,7 @@ import { readResultFromUrl, buildShareUrl } from '../url-state'
 import { computeDeviations } from '../result'
 import { renderSpectrumBar } from '../canvas/spectrum-bar'
 import { generateResultCard, downloadResultCard } from '../canvas/result-card'
-import { shareTwitter, shareWebApi, copyToClipboard, isWebShareSupported } from '../sharing'
+import { shareWebApi, copyToClipboard, isWebShareSupported } from '../sharing'
 import { t, getCurrentLocale } from '../i18n/index'
 
 const COLOR_HUE_MAP: Record<ColorName, string> = {
@@ -62,13 +62,6 @@ export function renderResults(container: HTMLElement): void {
             </div>
 
             <div class="actions-share">
-              <button class="btn-secondary" id="btn-twitter">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                </svg>
-                ${t('results.share_twitter')}
-              </button>
-
               <button class="btn-secondary" id="btn-copy">
                 ${t('results.copy_link')}
               </button>
@@ -165,10 +158,6 @@ function wireButtons(
     url.searchParams.delete('prev')
     url.hash = '#/test'
     window.location.href = url.toString()
-  })
-
-  container.querySelector('#btn-twitter')?.addEventListener('click', () => {
-    shareTwitter(result)
   })
 
   container.querySelector('#btn-copy')?.addEventListener('click', async () => {

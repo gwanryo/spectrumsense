@@ -3,24 +3,6 @@ import { buildShareUrl } from './url-state'
 import { t } from './i18n/index'
 
 /**
- * Open Twitter/X intent URL to share results.
- * Opens in a new window (popup).
- */
-export function shareTwitter(result: TestResult): void {
-  const shareUrl = buildShareUrl(result)
-  const roBoundary = Math.round(result.boundaries[0])
-  const tweetText = t('share.tweet', { ro: roBoundary })
-
-  const params = new URLSearchParams({
-    text: tweetText,
-    url: shareUrl,
-  })
-
-   const intentUrl = `https://x.com/intent/post?${params.toString()}`
-  window.open(intentUrl, '_blank', 'width=550,height=420,noopener,noreferrer')
-}
-
-/**
  * Use the Web Share API to share results (primarily mobile).
  * Returns true if share was initiated, false if API not available.
  */

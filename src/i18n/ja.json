@@ -39,13 +39,11 @@
    "results.refine": "精密測定（+21問）",
   "results.retake": "再テスト",
   "results.share": "シェア",
-  "results.share_twitter": "X（Twitter）でシェア",
   "results.copy_link": "リンクをコピー",
   "results.copied": "コピーしました！",
   "results.web_share": "シェアする",
   "results.download": "画像を保存",
 
-  "share.tweet": "スペクトラムセンスで自分の色覚境界を発見しました！赤↔橙の境界は{ro}°でした。ぜひ試してみてください：",
   "share.title": "私のスペクトラムセンス結果",
   "share.description": "私がどこで色の境界を認識するか確認してみてください。",
 

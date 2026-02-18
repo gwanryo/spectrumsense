@@ -43,16 +43,16 @@ export function renderSpectrumBar(
 
   const standardHues = BOUNDARIES.map(b => b.standardHue)
   drawBoundaryMarkers(ctx, standardHues, barY, barH, barW, {
-    color: 'rgba(255, 255, 255, 0.35)',
-    lineWidth: 1.5,
+    color: 'rgba(45, 212, 191, 0.7)',
+    lineWidth: 2,
     dashed: true,
     markerHeight: 10,
     position: 'below',
   })
 
   drawBoundaryMarkers(ctx, userBoundaries, barY, barH, barW, {
-    color: 'rgba(255, 255, 255, 0.9)',
-    lineWidth: 2,
+    color: '#ffffff',
+    lineWidth: 2.5,
     dashed: false,
     markerHeight: 12,
     position: 'above',
@@ -164,34 +164,44 @@ function drawColorLabels(
   ctx.save()
   ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
   ctx.textAlign = 'center'
-  ctx.textBaseline = 'top'
+  ctx.textBaseline = 'middle'
 
+  const N = labels.length
   const normalized = userBoundaries.map(normalizeHue)
 
-  for (let i = 0; i < 7; i++) {
-    const startHue = normalized[(i + 6) % 7]
+  const pillH = 16
+  const pillY = barY + barH + 14
+
+  for (let i = 0; i < N; i++) {
+    const startHue = normalized[(i + N - 1) % N]
     const endHue = normalized[i]
 
     // circularMidpoint handles 0°/360° wrap (naive average fails at violet→red boundary)
     const midHue = circularMidpoint(startHue, endHue)
 
-    const x = (midHue / 360) * barW
-    const y = barY + barH + 16
+    const x = Math.round((midHue / 360) * barW)
+    const centerY = pillY + pillH / 2
 
     const label = labels[i] ?? DEFAULT_COLOR_LABELS[i]
     const metrics = ctx.measureText(label)
-    const padding = 4
+    const paddingH = 6
+    const paddingV = 2
+    const pillW = metrics.width + paddingH * 2
+    const pillR = (pillH + paddingV * 2) / 2
 
-    ctx.fillStyle = 'rgba(10, 10, 15, 0.7)'
-    ctx.fillRect(
-      x - metrics.width / 2 - padding,
-      y - 1,
-      metrics.width + padding * 2,
-      14
+    ctx.fillStyle = 'rgba(10, 10, 15, 0.75)'
+    ctx.beginPath()
+    ctx.roundRect(
+      Math.round(x - pillW / 2),
+      pillY - paddingV,
+      pillW,
+      pillH + paddingV * 2,
+      pillR
     )
+    ctx.fill()
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)'
-    ctx.fillText(label, x, y)
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
+    ctx.fillText(label, x, centerY)
   }
 
   ctx.restore()
@@ -208,25 +218,30 @@ function drawLegend(
 
   const legendY = height - 12
 
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
-  ctx.fillRect(8, legendY - 4, 12, 8)
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.6)'
+  ctx.fillStyle = '#ffffff'
+  ctx.beginPath()
+  ctx.moveTo(8, legendY)
+  ctx.lineTo(8 - 4, legendY - 6)
+  ctx.lineTo(8 + 4, legendY - 6)
+  ctx.closePath()
+  ctx.fill()
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.85)'
   ctx.textAlign = 'left'
-  ctx.fillText('Your boundaries', 24, legendY)
+  ctx.fillText('Your boundaries', 18, legendY)
 
   ctx.save()
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)'
-  ctx.lineWidth = 1.5
-  ctx.setLineDash([3, 3])
+  ctx.strokeStyle = 'rgba(45, 212, 191, 0.7)'
+  ctx.lineWidth = 2
+  ctx.setLineDash([4, 3])
   ctx.beginPath()
-  ctx.moveTo(width - 120, legendY)
-  ctx.lineTo(width - 108, legendY)
+  ctx.moveTo(width - 130, legendY)
+  ctx.lineTo(width - 116, legendY)
   ctx.stroke()
   ctx.restore()
 
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.4)'
+  ctx.fillStyle = 'rgba(45, 212, 191, 0.9)'
   ctx.textAlign = 'left'
-  ctx.fillText('Typical boundaries', width - 104, legendY)
+  ctx.fillText('Typical boundaries', width - 112, legendY)
 
   ctx.restore()
 }

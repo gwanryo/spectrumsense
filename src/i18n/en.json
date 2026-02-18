@@ -39,13 +39,11 @@
    "results.refine": "Refine (+21 questions)",
   "results.retake": "Retake Test",
   "results.share": "Share",
-  "results.share_twitter": "Share on X (Twitter)",
   "results.copy_link": "Copy Link",
   "results.copied": "Link copied!",
   "results.web_share": "Share",
   "results.download": "Download Image",
 
-  "share.tweet": "I just discovered my color perception boundaries with SpectrumSense! My Red↔Orange boundary is at {ro}°. Try it yourself:",
   "share.title": "My SpectrumSense Results",
   "share.description": "See where I perceive color boundaries on the spectrum.",
 
