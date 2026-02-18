@@ -15,9 +15,7 @@ export interface BinarySearchState {
   high: number;      // current search high bound (hue degrees)
   currentHue: number; // current test hue (midpoint)
   step: number;       // current step (0-based)
-  maxSteps: number;   // may increase via adaptive extension
-  originalMaxSteps: number;  // initial maxSteps before adaptive extension
-  choices: boolean[];  // history of choices for oscillation detection
+  maxSteps: number;
 }
 
 export interface Question {

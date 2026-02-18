@@ -63,7 +63,7 @@
   "results.download": "画像を保存",
 
   "share.title": "私のスペクトラムセンス結果",
-  "share.description": "私がどこで色の境界を認識するか確認してみてください。",
+  "share.description": "色の境界、平均より{deviation}°ズレてた！あなたはどう？",
 
   "error.invalid_url": "無効または期限切れの結果リンクです。",
   "error.try_test": "自分でテストしてみる →"

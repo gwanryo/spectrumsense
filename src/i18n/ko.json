@@ -63,7 +63,7 @@
   "results.download": "이미지 저장",
 
   "share.title": "나의 스펙트럼센스 결과",
-  "share.description": "내가 색상 경계를 어디서 인식하는지 확인해보세요.",
+  "share.description": "색 경계가 평균보다 {deviation}° 달랐어! 너는 어때?",
 
   "error.invalid_url": "유효하지 않거나 만료된 결과 링크입니다.",
   "error.try_test": "직접 테스트해보기 →"

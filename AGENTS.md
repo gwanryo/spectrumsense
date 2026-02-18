@@ -22,11 +22,11 @@
 src/
 ├── types.ts          # 모든 타입 정의 (ColorName, Boundary, TestState, TestResult 등)
 ├── color.ts          # BOUNDARIES 배열 (7개), getColorName(), circularMidpoint(), normalizeHue()
-├── binary-search.ts  # 이진 탐색 알고리즘 (데이터 기반, 적응적 스텝 확장, oscillation 감지)
+├── binary-search.ts  # 이진 탐색 알고리즘 (데이터 기반, 고정 스텝)
 ├── state-machine.ts  # 테스트 상태 머신 (라운드별 셔플, 캐치 트라이얼, 좌우 카운터밸런싱)
 ├── result.ts         # 편차 계산, 색상 영역 계산
 ├── url-state.ts      # 결과 인코딩/디코딩 (16바이트 바이너리 → Base64URL)
-├── sharing.ts        # Web Share API, 클립보드 복사
+├── sharing.ts        # Web Share API (평균 편차 포함 공유 텍스트), 클립보드 복사
 ├── router.ts         # 해시 기반 라우팅 (landing, test, results 3개 페이지)
 ├── main.ts           # 엔트리포인트 — registerRoute 3개
 ├── canvas/
@@ -49,8 +49,8 @@ src/
 ```
 tests/
 ├── color.test.ts         # BOUNDARIES, getColorName, circularMidpoint (21 tests)
-├── binary-search.test.ts # 수렴 테스트, 7개 경계, oscillation (24 tests)
-├── state-machine.test.ts # 상태 전이, 셔플, 캐치 트라이얼, 적응적 스텝 (23 tests)
+├── binary-search.test.ts # 수렴 테스트, 7개 경계 (21 tests)
+├── state-machine.test.ts # 상태 전이, 셔플, 캐치 트라이얼 (23 tests)
 ├── url-state.test.ts     # 인코딩/디코딩 round-trip (13 tests)
 ├── result.test.ts        # 편차/영역 계산 (13 tests)
 ├── i18n.test.ts          # 3개 로케일 키 일치 검증 (9 tests)
@@ -73,9 +73,8 @@ tests/
 - **최소 응답 시간**: 버튼 300ms 비활성화 — 색상 인지 전의 무의식적 클릭 방지
 - **캐치 트라이얼**: 매 라운드 종료 후 1회 (이전 라운드 질문 중 하나를 반복). 결과에 내적 일관성 점수(consistency score) 제공
 - **워밍업**: 테스트 시작 전 2개의 연습 문항 (명확한 색상) — 결과에 미반영
-- **적응적 스텝**: choices[] 배열에서 oscillation 감지 → 3회 이상 방향 전환 시 maxSteps를 1~2 확장 (최대 +2)
-- **환경 체크**: 테스트 전 화면 밝기, 야간 모드, 조명 환경 안내(좌정렬) + 진행 방식 3단계 설명 + 경계값/측정 정확도 info 카드(2-column grid) + 적응적 문항 수 안내
-- **테스트 페이지 흐름**: 환경 체크(+진행 방식+경계/정확도 info) → 워밍업(2Q) → 워밍업 완료 전환 화면 → 본 테스트(48Q normal / 24Q refine, 적응적 확장 가능). **Refine 모드는 환경 체크·워밍업을 건너뛰고 바로 본 테스트 진입**
+- **환경 체크**: 테스트 전 화면 밝기, 야간 모드, 조명 환경 안내(좌정렬) + 진행 방식 3단계 설명 + 경계값/측정 정확도 info 카드(2-column grid)
+- **테스트 페이지 흐름**: 환경 체크(+진행 방식+경계/정확도 info) → 워밍업(2Q) → 워밍업 완료 전환 화면 → 본 테스트(48Q normal / 24Q refine, 고정). **Refine 모드는 환경 체크·워밍업을 건너뛰고 바로 본 테스트 진입**
 
 ### URL 인코딩 포맷
 - 16바이트 바이너리 → Base64URL
@@ -129,7 +128,7 @@ tests/
 
 ```bash
 npm run dev        # 개발 서버 (localhost:5173)
-npm test           # vitest run (104 tests)
+npm test           # vitest run (101 tests)
 npm run test:watch # vitest watch mode
 npm run build      # tsc && vite build
 npm run preview    # 빌드 결과물 프리뷰 서버
@@ -153,6 +152,7 @@ npx tsc --noEmit   # 타입 체크만
 - **result.ts `% 6` 하드코딩**: `normalized[(i + 1) % 6]` → `% BOUNDARIES.length`로 수정 필요했음
 - **Red 라벨 캔버스 클리핑**: Red(≈1.5°)가 캔버스 좌측 끝에서 잘림 → `drawColorLabels()`에 `pillW/2` 기반 x좌표 클램핑 추가로 수정
 - **Refine 무한 반복 버그**: `showConfirmationScreen()`과 results.ts에서 mode 체크 없이 항상 Refine 버튼 렌더링 → `result.mode !== 'refine'` 조건 추가로 1회만 허용
+- **결과 카드 배경 투명화**: `drawMiniSpectrumBar()`에서 `globalCompositeOperation = 'destination-in'`으로 스펙트럼 바 둥근 모서리 처리 → 캔버스 전체 비트맵이 바 영역만 남고 투명화됨. `save()/restore()`는 composite mode만 복원하고 비트맵 파괴는 되돌리지 않음. 수정: `clip()` 기반 클리핑으로 교체
 
 ### macOS 환경 이슈
 - `sed`의 정규표현식이 GNU와 다름 — 복잡한 텍스트 처리는 `python3 -c` 사용 권장

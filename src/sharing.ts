@@ -1,20 +1,21 @@
 import type { TestResult } from './types'
 import { buildShareUrl } from './url-state'
+import { computeDeviations } from './result'
 import { t } from './i18n/index'
 
-/**
- * Use the Web Share API to share results (primarily mobile).
- * Returns true if share was initiated, false if API not available.
- */
 export async function shareWebApi(result: TestResult): Promise<boolean> {
   if (!isWebShareSupported()) return false
 
   const shareUrl = buildShareUrl(result)
+  const deviations = computeDeviations(result.boundaries)
+  const meanDeviation = Math.round(
+    deviations.reduce((sum, d) => sum + Math.abs(d.difference), 0) / deviations.length
+  )
 
   try {
     await navigator.share({
       title: t('share.title'),
-      text: t('share.description'),
+      text: t('share.description', { deviation: meanDeviation }),
       url: shareUrl,
     })
     return true

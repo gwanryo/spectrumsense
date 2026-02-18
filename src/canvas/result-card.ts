@@ -105,18 +105,9 @@ function drawMiniSpectrumBar(
   const barY = 180
   const barW = CARD_WIDTH - 160
   const barH = 60
-
-  // Draw spectrum gradient
-  for (let i = 0; i < barW; i++) {
-    const hue = (i / barW) * 360
-    ctx.fillStyle = `hsl(${hue}, 100%, 50%)`
-    ctx.fillRect(barX + i, barY, 1, barH)
-  }
-
-  // Draw rounded corners overlay (clip effect)
-  ctx.save()
-  ctx.globalCompositeOperation = 'destination-in'
   const radius = 8
+
+  ctx.save()
   ctx.beginPath()
   ctx.moveTo(barX + radius, barY)
   ctx.lineTo(barX + barW - radius, barY)
@@ -128,8 +119,13 @@ function drawMiniSpectrumBar(
   ctx.lineTo(barX, barY + radius)
   ctx.quadraticCurveTo(barX, barY, barX + radius, barY)
   ctx.closePath()
-  ctx.fillStyle = '#fff'
-  ctx.fill()
+  ctx.clip()
+
+  for (let i = 0; i < barW; i++) {
+    const hue = (i / barW) * 360
+    ctx.fillStyle = `hsl(${hue}, 100%, 50%)`
+    ctx.fillRect(barX + i, barY, 1, barH)
+  }
   ctx.restore()
 
   // Draw user boundary markers

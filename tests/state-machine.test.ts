@@ -179,10 +179,10 @@ describe('Refine mode with catch trials', () => {
   })
 })
 
-describe('Adaptive step extension', () => {
-  it('extends total steps when oscillation triggers adaptive behavior', () => {
+describe('Alternating choices', () => {
+  it('completes in fixed 48 answers even with alternating choices', () => {
     const { count } = runFullTest('normal', undefined, false)
-    expect(count).toBeGreaterThan(48)
+    expect(count).toBe(48)
   })
 })
 

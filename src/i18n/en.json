@@ -63,7 +63,7 @@
   "results.download": "Download Image",
 
   "share.title": "My SpectrumSense Results",
-  "share.description": "See where I perceive color boundaries on the spectrum.",
+  "share.description": "My color boundaries were {deviation}° off from average! How about you?",
 
   "error.invalid_url": "Invalid or expired result link.",
   "error.try_test": "Take the test yourself →"

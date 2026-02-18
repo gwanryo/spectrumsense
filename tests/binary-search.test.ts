@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  countOscillations,
   getNextHue,
   getResult,
   initBinarySearch,
@@ -90,14 +89,14 @@ describe('isComplete', () => {
     expect(isComplete(state)).toBe(true)
   })
 
-  it('extends maxSteps when oscillation exceeds threshold', () => {
+  it('completes at exactly maxSteps even with alternating choices', () => {
     const boundary = BOUNDARIES[1]
     let state = initBinarySearch(boundary, 6)
     for (let i = 0; i < 6; i++) {
       state = recordChoice(state, i % 2 === 0)
     }
-    expect(isComplete(state)).toBe(false)
-    expect(state.maxSteps).toBeGreaterThan(6)
+    expect(isComplete(state)).toBe(true)
+    expect(state.maxSteps).toBe(6)
   })
 })
 
@@ -204,22 +203,7 @@ describe('CRITICAL: Pink->Red wrap-around (boundary index 6)', () => {
   })
 })
 
-describe('countOscillations', () => {
-  it('returns 0 for consistent choices', () => {
-    expect(countOscillations([true, true, true])).toBe(0)
-    expect(countOscillations([false, false, false])).toBe(0)
-  })
 
-  it('counts direction changes', () => {
-    expect(countOscillations([true, false, true])).toBe(2)
-    expect(countOscillations([true, false, true, false, true, false])).toBe(5)
-  })
-
-  it('returns 0 for empty or single-element arrays', () => {
-    expect(countOscillations([])).toBe(0)
-    expect(countOscillations([true])).toBe(0)
-  })
-})
 
 describe('Refine mode', () => {
   it('refine mode uses 3 steps', () => {
