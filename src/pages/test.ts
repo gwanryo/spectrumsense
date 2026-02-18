@@ -67,6 +67,19 @@ function showEnvironmentCheck(
           <p class="test-env-how-note">${t('test.how_note')}</p>
         </div>
 
+        <div class="test-env-divider"></div>
+
+        <div class="test-env-details">
+          <div class="test-env-detail">
+            <h3 class="test-env-detail-title">${t('landing.boundaries_title')}</h3>
+            <p class="test-env-detail-text">${t('landing.boundaries_desc')}</p>
+          </div>
+          <div class="test-env-detail">
+            <h3 class="test-env-detail-title">${t('landing.reliability_title')}</h3>
+            <p class="test-env-detail-text">${t('landing.reliability_desc')}</p>
+          </div>
+        </div>
+
         <button class="test-confirmation-btn test-confirmation-btn-primary" id="btn-env-ready">
           ${t('test.env_ready')}
         </button>
@@ -374,16 +387,25 @@ function injectTestStyles(): void {
       margin: 0;
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: 0.625rem;
       color: rgba(255, 255, 255, 0.65);
       font-size: 1rem;
       font-weight: 300;
       line-height: 1.6;
+      text-align: left;
+      max-width: 440px;
+      width: 100%;
+    }
+
+    .test-env-list li {
+      display: flex;
+      gap: 0.5rem;
     }
 
     .test-env-list li::before {
-      content: '→ ';
-      color: rgba(255, 255, 255, 0.3);
+      content: '→';
+      color: rgba(255, 255, 255, 0.2);
+      flex-shrink: 0;
     }
 
     .test-env-divider {
@@ -447,6 +469,40 @@ function injectTestStyles(): void {
       font-weight: 300;
       margin: 0;
       font-style: italic;
+    }
+
+    .test-env-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      max-width: 540px;
+      width: 100%;
+    }
+
+    .test-env-detail {
+      padding: 1.25rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--radius-md, 12px);
+      text-align: left;
+    }
+
+    .test-env-detail-title {
+      font-family: var(--font-sans, 'Outfit', sans-serif);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.5);
+      margin-bottom: 0.625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .test-env-detail-text {
+      font-size: 0.8125rem;
+      color: rgba(255, 255, 255, 0.35);
+      line-height: 1.7;
+      font-weight: 300;
+      margin: 0;
     }
 
     .test-confirmation {
@@ -592,6 +648,12 @@ function injectTestStyles(): void {
       color: rgba(255, 255, 255, 0.7);
       background: rgba(255, 255, 255, 0.04);
       border-color: rgba(255, 255, 255, 0.18);
+    }
+
+    @media (max-width: 480px) {
+      .test-env-details {
+        grid-template-columns: 1fr;
+      }
     }
 
     @media (max-width: 375px) {

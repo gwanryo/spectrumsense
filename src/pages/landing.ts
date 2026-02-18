@@ -37,20 +37,7 @@ export function renderLanding(
           </div>
         </div>
 
-        <section class="landing-info">
-          <div class="landing-info-inner">
-            <div class="landing-details">
-              <div class="landing-detail">
-                <h3 class="landing-detail-title">${t('landing.boundaries_title')}</h3>
-                <p class="landing-detail-text">${t('landing.boundaries_desc')}</p>
-              </div>
-              <div class="landing-detail">
-                <h3 class="landing-detail-title">${t('landing.reliability_title')}</h3>
-                <p class="landing-detail-text">${t('landing.reliability_desc')}</p>
-              </div>
-            </div>
-          </div>
-        </section>
+
       </main>
     </div>
   `
@@ -267,65 +254,6 @@ function injectLandingStyles(): void {
       animation-delay: 0.55s;
     }
 
-    .landing-info {
-      width: 100%;
-      padding: 0 1.5rem 5rem;
-      display: flex;
-      justify-content: center;
-      animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
-      animation-delay: 0.6s;
-    }
-
-    .landing-info-inner {
-      max-width: 660px;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 3rem;
-    }
-
-    .landing-details {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-    }
-
-    .landing-detail {
-      padding: 1.25rem;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      transition: border-color var(--transition-normal);
-    }
-
-    .landing-detail:hover {
-      border-color: var(--border-accent);
-    }
-
-    .landing-detail-title {
-      font-family: var(--font-sans);
-      font-size: 0.8125rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .landing-detail-text {
-      font-size: 0.8125rem;
-      color: var(--text-muted);
-      line-height: 1.7;
-      font-weight: 300;
-      margin: 0;
-    }
-
-    @media (max-width: 480px) {
-      .landing-details {
-        grid-template-columns: 1fr;
-      }
-    }
-
     @media (max-width: 375px) {
       .landing-header {
         padding: 1rem;
@@ -339,9 +267,6 @@ function injectLandingStyles(): void {
       .start-btn {
         width: 100%;
         justify-content: center;
-      }
-      .landing-info {
-        padding: 0 1rem 3rem;
       }
     }
   `

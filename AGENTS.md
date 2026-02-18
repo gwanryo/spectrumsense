@@ -33,7 +33,7 @@ src/
 │   ├── spectrum-bar.ts   # 스펙트럼 바 캔버스 렌더링 + 라벨
 │   └── result-card.ts    # 다운로드 가능한 결과 카드 PNG (1200x630)
 ├── pages/
-│   ├── landing.ts    # 랜딩 페이지 (hero + info 섹션: 경계값, 신뢰성)
+│   ├── landing.ts    # 랜딩 페이지 (hero 섹션만 — 스펙트럼 프리뷰, 제목, 설명, 시작 버튼)
 │   ├── test.ts       # 테스트 페이지 (환경 체크 + 진행 방식 안내 + 카드 레이아웃 + 확인 화면)
 │   └── results.ts    # 결과 페이지 (액션 버튼 아래 레퍼런스 푸터)
 ├── i18n/
@@ -74,8 +74,8 @@ tests/
 - **캐치 트라이얼**: 매 라운드 종료 후 1회 (이전 라운드 질문 중 하나를 반복). 결과에 내적 일관성 점수(consistency score) 제공
 - **워밍업**: 테스트 시작 전 2개의 연습 문항 (명확한 색상) — 결과에 미반영
 - **적응적 스텝**: choices[] 배열에서 oscillation 감지 → 3회 이상 방향 전환 시 maxSteps를 1~2 확장 (최대 +2)
-- **환경 체크**: 테스트 전 화면 밝기, 야간 모드, 조명 환경 안내 + 진행 방식 3단계 설명 + 적응적 문항 수 안내
-- **테스트 페이지 흐름**: 환경 체크(+진행 방식) → 워밍업(2Q) → 워밍업 완료 전환 화면 → 본 테스트(48Q normal / 24Q refine, 적응적 확장 가능). **Refine 모드는 환경 체크·워밍업을 건너뛰고 바로 본 테스트 진입**
+- **환경 체크**: 테스트 전 화면 밝기, 야간 모드, 조명 환경 안내(좌정렬) + 진행 방식 3단계 설명 + 경계값/측정 정확도 info 카드(2-column grid) + 적응적 문항 수 안내
+- **테스트 페이지 흐름**: 환경 체크(+진행 방식+경계/정확도 info) → 워밍업(2Q) → 워밍업 완료 전환 화면 → 본 테스트(48Q normal / 24Q refine, 적응적 확장 가능). **Refine 모드는 환경 체크·워밍업을 건너뛰고 바로 본 테스트 진입**
 
 ### URL 인코딩 포맷
 - 16바이트 바이너리 → Base64URL
@@ -146,7 +146,7 @@ npx tsc --noEmit   # 타입 체크만
 - **result.ts `getColorRegions()`**: `BOUNDARIES.length` 동적 사용 — 이 패턴을 변경하면 안 됨
 - **spectrum-bar.ts ↔ result-card.ts 시각 일관성**: standard 경계 마커는 양쪽 모두 teal 대시선 사용. 한쪽만 변경하면 안 됨
 - **spectrum-bar.ts `drawLegend()`**: 반투명 배경 pill(`roundRect`) 위에 범례 표시. 범례 수정 시 배경 영역 크기도 함께 조정 필요
-- **i18n 키 크로스 참조**: `landing.how_title`, `landing.how_step1-3` 키는 `test.ts`의 환경 체크 화면에서 사용됨 (landing.ts에서는 미사용). 키 prefix가 실제 사용처와 불일치하므로 삭제/리네임 시 주의
+- **i18n 키 크로스 참조**: `landing.how_title`, `landing.how_step1-3`, `landing.boundaries_title/desc`, `landing.reliability_title/desc` 키는 `test.ts`의 환경 체크 화면에서 사용됨 (landing.ts에서는 미사용). 키 prefix가 실제 사용처와 불일치하므로 삭제/리네임 시 주의
 
 ### 과거에 발생했던 버그
 - **라벨 위치 밀림**: `drawColorLabels()`에서 `startHue = normalized[i]` 사용 → 각 라벨이 한 칸씩 밀려 표시됨. 수정: `startHue = normalized[(i + N-1) % N]`, `endHue = normalized[i]`
