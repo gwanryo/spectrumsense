@@ -1,6 +1,6 @@
 import './styles/main.css'
 import { initI18n } from './i18n/index'
-import { initRouter, registerRoute } from './router'
+import { initRouter, registerRoute, getHashParams } from './router'
 import { renderLanding } from './pages/landing'
 import { renderTest } from './pages/test'
 import { renderResults } from './pages/results'
@@ -18,15 +18,16 @@ registerRoute('landing', (container) => {
       window.location.hash = '#/test'
     },
     (locale) => {
-      const url = new URL(window.location.href)
-      url.searchParams.set('lang', locale)
-      window.history.replaceState({}, '', url.toString())
+      const hashBase = (window.location.hash || '#/').split('?')[0]
+      const params = getHashParams()
+      params.set('lang', locale)
+      window.history.replaceState({}, '', `${window.location.pathname}${hashBase}?${params.toString()}`)
     }
   )
 })
 
 registerRoute('test', (container) => {
-  const params = new URLSearchParams(window.location.search)
+  const params = getHashParams()
   const prevEncoded = params.get('prev')
 
   if (prevEncoded) {

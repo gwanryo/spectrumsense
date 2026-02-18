@@ -91,16 +91,16 @@ export function decodeResult(encoded: string): TestResult | null {
 /** Build a full shareable URL with encoded results */
 export function buildShareUrl(result: TestResult): string {
   const encoded = encodeResult(result)
-  const url = new URL(BASE_URL)
-  url.searchParams.set('r', encoded)
-  url.hash = '/results'
-  return url.toString()
+  return `${BASE_URL}#/results?r=${encoded}`
 }
 
-/** Read and decode result from the current page URL's ?r= parameter */
+/** Read and decode result from the current page URL's hash parameter */
 export function readResultFromUrl(): TestResult | null {
   try {
-    const params = new URLSearchParams(window.location.search)
+    const hash = window.location.hash
+    const queryIndex = hash.indexOf('?')
+    if (queryIndex === -1) return null
+    const params = new URLSearchParams(hash.slice(queryIndex))
     const encoded = params.get('r')
     if (!encoded) return null
     return decodeResult(encoded)

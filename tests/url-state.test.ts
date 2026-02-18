@@ -112,7 +112,8 @@ describe('buildShareUrl', () => {
 
   it('encoded result in URL round-trips correctly', () => {
     const url = buildShareUrl(standardResult)
-    const rParam = new URL(url).searchParams.get('r')
+    const hash = new URL(url).hash
+    const rParam = new URLSearchParams(hash.slice(hash.indexOf('?'))).get('r')
     expect(rParam).toBeTruthy()
     const decoded = decodeResult(rParam!)
     expect(decoded).not.toBeNull()

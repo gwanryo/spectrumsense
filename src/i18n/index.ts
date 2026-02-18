@@ -14,11 +14,15 @@ let _currentLocale: Locale = 'en'
  * Priority: URL param > navigator.language > 'en'
  */
 export function detectLocale(): Locale {
-  // 1. Check URL param ?lang=
-  const params = new URLSearchParams(window.location.search)
-  const langParam = params.get('lang')
-  if (langParam && isValidLocale(langParam)) {
-    return langParam as Locale
+  // 1. Check hash param #/...?lang=
+  const hash = window.location.hash
+  const queryIndex = hash.indexOf('?')
+  if (queryIndex !== -1) {
+    const hashParams = new URLSearchParams(hash.slice(queryIndex))
+    const langParam = hashParams.get('lang')
+    if (langParam && isValidLocale(langParam)) {
+      return langParam as Locale
+    }
   }
 
   // 2. Check browser language

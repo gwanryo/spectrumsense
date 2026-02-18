@@ -10,18 +10,24 @@ export function registerRoute(page: Page, renderer: PageRenderer): void {
   routes.set(page, renderer)
 }
 
+/** Parse query params from the hash fragment (e.g., #/results?r=xxx) */
+export function getHashParams(): URLSearchParams {
+  const hash = window.location.hash
+  const queryIndex = hash.indexOf('?')
+  if (queryIndex === -1) return new URLSearchParams()
+  return new URLSearchParams(hash.slice(queryIndex))
+}
+
 /** Navigate to a page by changing the hash */
 export function navigateTo(page: Page, params?: Record<string, string>): void {
   let hash = `#/${page === 'landing' ? '' : page}`
 
   if (params) {
-    const searchParams = new URLSearchParams(window.location.search)
+    const searchParams = new URLSearchParams()
     for (const [key, value] of Object.entries(params)) {
       searchParams.set(key, value)
     }
-    const search = searchParams.toString()
-    window.location.href = `${window.location.pathname}?${search}${hash}`
-    return
+    hash += `?${searchParams.toString()}`
   }
 
   window.location.hash = hash
@@ -29,7 +35,7 @@ export function navigateTo(page: Page, params?: Record<string, string>): void {
 
 /** Get the current page from the hash */
 export function getCurrentPage(): Page {
-  const hash = window.location.hash
+  const hash = window.location.hash.split('?')[0]
   if (!hash || hash === '#/' || hash === '#') return 'landing'
   if (hash.startsWith('#/test')) return 'test'
   if (hash.startsWith('#/results')) return 'results'
@@ -40,14 +46,12 @@ export function getCurrentPage(): Page {
 function renderCurrentPage(): void {
   if (!appContainer) return
 
-  // Check for ?r= param on initial load → go to results
-  const params = new URLSearchParams(window.location.search)
+  const params = getHashParams()
   const hasResult = params.has('r')
   const currentPage = getCurrentPage()
 
-  // If we have a result param but we're on landing, redirect to results
   if (hasResult && currentPage === 'landing') {
-    window.location.hash = '#/results'
+    window.location.hash = `#/results?${params.toString()}`
     return
   }
 

@@ -146,18 +146,13 @@ function wireButtons(
 ): void {
   container.querySelector('#btn-refine')?.addEventListener('click', () => {
     const encoded = btoa(JSON.stringify(result))
-    const url = new URL(window.location.href)
-    url.searchParams.set('prev', encoded)
-    url.hash = '#/test'
-    window.location.href = url.toString()
+    const params = new URLSearchParams()
+    params.set('prev', encoded)
+    window.location.hash = `#/test?${params.toString()}`
   })
 
   container.querySelector('#btn-retake')?.addEventListener('click', () => {
-    const url = new URL(window.location.href)
-    url.searchParams.delete('r')
-    url.searchParams.delete('prev')
-    url.hash = '#/test'
-    window.location.href = url.toString()
+    window.location.hash = '#/test'
   })
 
   container.querySelector('#btn-copy')?.addEventListener('click', async () => {
