@@ -8,7 +8,7 @@
 - **Repo**: github.com/gwanryo/spectrumsense
 - **배포**: GitHub Pages (Actions) — `main` push 시 자동 배포
 - **의존성**: 없음 (zero runtime dependencies, devDependencies만 존재)
-- **외부 리소스**: Google Fonts (Instrument Serif, JetBrains Mono, Outfit) — `index.html`에서 로드
+- **외부 리소스**: Google Fonts (Instrument Serif, JetBrains Mono, Noto Sans KR, Noto Sans JP, Outfit) — `index.html`에서 로드
 
 ## Architecture
 
@@ -26,21 +26,21 @@ src/
 ├── state-machine.ts  # 테스트 상태 머신 (라운드별 셔플, 캐치 트라이얼, 좌우 카운터밸런싱)
 ├── result.ts         # 편차 계산, 색상 영역 계산
 ├── url-state.ts      # 결과 인코딩/디코딩 (16바이트 바이너리 → Base64URL)
-├── sharing.ts        # X/Twitter 공유, 클립보드 복사
+├── sharing.ts        # Web Share API, 클립보드 복사
 ├── router.ts         # 해시 기반 라우팅 (landing, test, results 3개 페이지)
 ├── main.ts           # 엔트리포인트 — registerRoute 3개
 ├── canvas/
 │   ├── spectrum-bar.ts   # 스펙트럼 바 캔버스 렌더링 + 라벨
 │   └── result-card.ts    # 다운로드 가능한 결과 카드 PNG (1200x630)
 ├── pages/
-│   ├── landing.ts    # 랜딩 페이지
+│   ├── landing.ts    # 랜딩 페이지 (hero + info 섹션: 진행 방식, 경계값, 신뢰성)
 │   ├── test.ts       # 테스트 페이지 (카드 레이아웃 + 확인 화면 포함)
-│   └── results.ts    # 결과 페이지
+│   └── results.ts    # 결과 페이지 (레퍼런스 링크 푸터 포함)
 ├── i18n/
 │   ├── index.ts      # i18n 초기화, t() 함수
-│   ├── en.json       # 영어 (53개 키)
-│   ├── ko.json       # 한국어 (53개 키)
-│   └── ja.json       # 일본어 (53개 키)
+│   ├── en.json       # 영어 (62개 키)
+│   ├── ko.json       # 한국어 (62개 키)
+│   └── ja.json       # 일본어 (62개 키)
 └── styles/
     └── main.css      # CSS 커스텀 프로퍼티, 전역 스타일
 ```
@@ -75,7 +75,7 @@ tests/
 - **워밍업**: 테스트 시작 전 2개의 연습 문항 (명확한 색상) — 결과에 미반영
 - **적응적 스텝**: choices[] 배열에서 oscillation 감지 → 3회 이상 방향 전환 시 maxSteps를 1~2 확장 (최대 +2)
 - **환경 체크**: 테스트 전 화면 밝기, 야간 모드, 조명 환경 안내 화면 표시
-- **테스트 페이지 흐름**: 환경 체크 → 워밍업(2Q) → 본 테스트(48Q normal / 24Q refine, 적응적 확장 가능)
+- **테스트 페이지 흐름**: 환경 체크 → 워밍업(2Q) → 워밍업 완료 전환 화면 → 본 테스트(48Q normal / 24Q refine, 적응적 확장 가능)
 
 ### URL 인코딩 포맷
 - 16바이트 바이너리 → Base64URL
@@ -83,16 +83,19 @@ tests/
 - mode 1바이트 (offset 14): 0=normal, 1=refine
 - locale 1바이트 (offset 15): 0=en, 1=ko, 2=ja
 
+### 디자인 시스템
+- **버튼**: `.btn-primary`와 `.test-confirmation-btn-primary`는 teal 단색(`--accent: #2dd4bf`) + 어두운 텍스트. 무지개 그라데이션은 스펙트럼 프리뷰/프로그레스 바에만 사용
+- **CJK 폰트**: `--font-mono`와 `--font-sans` 스택에 Noto Sans KR/JP를 CJK 폴백으로 포함. JetBrains Mono는 Latin 전용, 한글/일본어는 Noto Sans로 렌더링
+
 ### 테스트 페이지 레이아웃
 - **카드 스타일**: 다크 배경(`#0a0a0f`) 위에 80% 크기의 둥근 모서리 색상 카드
 - **모바일** (≤375px): 카드가 전체 화면으로 확장
 - `transition: background-color 0ms` — 색상 전환은 의도적으로 즉시
 
-### 확인 화면
-- 테스트 완료 시 즉시 결과 페이지로 이동하지 않고 확인 화면 표시
-- `src/pages/test.ts` 내 `showConfirmationScreen()` 함수로 구현
+### 전환 화면들
+- **워밍업 완료**: 연습 2문항 후 `showWarmupComplete()` — 체크 아이콘 + "연습 완료" 메시지 + 시작 버튼. 본 테스트 시작 전 명시적 전환점
+- **테스트 완료**: `showConfirmationScreen()` — "See Results" + "Refine (+21)" 두 버튼
 - 별도 `Page` 타입이나 라우트 없이 test.ts 내부에서 처리
-- "See Results" + "Refine (+21)" 두 버튼
 
 ### 라우팅
 - 3개 페이지만 존재: `landing`, `test`, `results`
@@ -125,12 +128,13 @@ npx tsc --noEmit   # 타입 체크만
 - **color.ts `getColorName()`**: 7개 영역을 if/else로 분기. 경계 추가/삭제 시 반드시 수정 필요
 - **url-state.ts**: 바이트 오프셋 하드코딩됨 (14, 15, 16). 경계 개수 변경 시 전부 수정
 - **result-card.ts**: colorNames에 3개 언어 하드코딩됨 (i18n 시스템 미사용, 캔버스 렌더링이라)
-- **spectrum-bar.ts `drawColorLabels()`**: 인덱스 수학 `(i + 6) % 7`로 이전 경계 참조. 경계 수 변경 시 반드시 업데이트
+- **spectrum-bar.ts `drawColorLabels()`**: 인덱스 수학 `(i + N-1) % N`으로 이전 경계 참조 (동적). 라벨 x좌표는 캔버스 엣지 클램핑 적용됨
 - **result.ts `getColorRegions()`**: `BOUNDARIES.length` 동적 사용 — 이 패턴을 변경하면 안 됨
 
 ### 과거에 발생했던 버그
 - **라벨 위치 밀림**: `drawColorLabels()`에서 `startHue = normalized[i]` 사용 → 각 라벨이 한 칸씩 밀려 표시됨. 수정: `startHue = normalized[(i + N-1) % N]`, `endHue = normalized[i]`
 - **result.ts `% 6` 하드코딩**: `normalized[(i + 1) % 6]` → `% BOUNDARIES.length`로 수정 필요했음
+- **Red 라벨 캔버스 클리핑**: Red(≈1.5°)가 캔버스 좌측 끝에서 잘림 → `drawColorLabels()`에 `pillW/2` 기반 x좌표 클램핑 추가로 수정
 
 ### macOS 환경 이슈
 - `sed`의 정규표현식이 GNU와 다름 — 복잡한 텍스트 처리는 `python3 -c` 사용 권장
