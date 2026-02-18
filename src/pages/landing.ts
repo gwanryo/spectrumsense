@@ -68,9 +68,11 @@ function injectLandingStyles(): void {
   style.id = styleId
   style.textContent = `
     .landing-page {
+      min-height: 100svh;
       min-height: 100dvh;
       display: flex;
       flex-direction: column;
+      overflow-x: hidden;
     }
 
     .landing-header {
@@ -120,10 +122,11 @@ function injectLandingStyles(): void {
       display: flex;
       flex-direction: column;
       align-items: center;
+      min-height: 0;
     }
 
     .landing-hero {
-      min-height: calc(100dvh - 72px);
+      flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
