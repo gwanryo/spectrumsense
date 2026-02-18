@@ -78,6 +78,12 @@ describe('circularDistance', () => {
     // From 355° to 5° = +10° (clockwise), not -350°
     expect(circularDistance(355, 5)).toBeCloseTo(10, 0)
   })
+
+  it('returns zero for identical angles', () => {
+    expect(circularDistance(0, 0)).toBeCloseTo(0, 5)
+    expect(circularDistance(180, 180)).toBeCloseTo(0, 5)
+    expect(circularDistance(359, 359)).toBeCloseTo(0, 5)
+  })
 })
 
 describe('hslString', () => {
@@ -131,13 +137,24 @@ describe('BOUNDARIES', () => {
 describe('getColorName with 7 boundaries', () => {
   const boundaries = BOUNDARIES.map(b => b.standardHue)
 
-  it('classifies violet and pink regions correctly', () => {
-    expect(getColorName(290, boundaries)).toBe('violet')
+  it('classifies all 7 color regions correctly', () => {
+    expect(getColorName(350, boundaries)).toBe('red')
+    expect(getColorName(10, boundaries)).toBe('red')
+    expect(getColorName(30, boundaries)).toBe('orange')
+    expect(getColorName(60, boundaries)).toBe('yellow')
+    expect(getColorName(120, boundaries)).toBe('green')
+    expect(getColorName(200, boundaries)).toBe('blue')
+    expect(getColorName(280, boundaries)).toBe('violet')
     expect(getColorName(320, boundaries)).toBe('pink')
   })
 
-  it('keeps wrap-around reds on both ends', () => {
-    expect(getColorName(350, boundaries)).toBe('red')
-    expect(getColorName(10, boundaries)).toBe('red')
+  it('classifies hues exactly at boundary values as the "to" color', () => {
+    expect(getColorName(18, boundaries)).toBe('orange')
+    expect(getColorName(48, boundaries)).toBe('yellow')
+    expect(getColorName(78, boundaries)).toBe('green')
+    expect(getColorName(163, boundaries)).toBe('blue')
+    expect(getColorName(258, boundaries)).toBe('violet')
+    expect(getColorName(300, boundaries)).toBe('pink')
+    expect(getColorName(345, boundaries)).toBe('red')
   })
 })

@@ -101,23 +101,23 @@ describe('isComplete', () => {
 })
 
 describe('Normal boundary convergence (Orange->Yellow)', () => {
-  it('all-first choices converges near low bound', () => {
+  it('all-first choices converges tightly toward high bound', () => {
     const { result } = runSearch(1, Array(6).fill(true))
-    expect(result).toBeGreaterThanOrEqual(30)
+    expect(result).toBeGreaterThanOrEqual(64)
     expect(result).toBeLessThanOrEqual(65)
   })
 
-  it('all-second choices converges near high bound', () => {
+  it('all-second choices converges tightly toward low bound', () => {
     const { result } = runSearch(1, Array(6).fill(false))
     expect(result).toBeGreaterThanOrEqual(30)
-    expect(result).toBeLessThanOrEqual(65)
+    expect(result).toBeLessThanOrEqual(31)
   })
 
-  it('alternating choices converges to mid-range', () => {
+  it('alternating choices converges to stable mid-range', () => {
     const choices = [true, false, true, false, true, false]
     const { result } = runSearch(1, choices)
-    expect(result).toBeGreaterThanOrEqual(30)
-    expect(result).toBeLessThanOrEqual(65)
+    expect(result).toBeGreaterThanOrEqual(53)
+    expect(result).toBeLessThanOrEqual(54)
   })
 
   it('result is deterministic for same choices', () => {
@@ -125,6 +125,13 @@ describe('Normal boundary convergence (Orange->Yellow)', () => {
     const { result: firstResult } = runSearch(1, choices)
     const { result: secondResult } = runSearch(1, choices)
     expect(firstResult).toBeCloseTo(secondResult, 5)
+  })
+
+  it('ignores extra choices after completion', () => {
+    const exact = runSearch(1, Array(6).fill(true))
+    const overlong = runSearch(1, Array(20).fill(true))
+    expect(overlong.hues).toHaveLength(exact.hues.length)
+    expect(overlong.result).toBeCloseTo(exact.result, 6)
   })
 })
 

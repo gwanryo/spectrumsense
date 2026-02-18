@@ -1,38 +1,38 @@
 import { describe, it, expect } from 'vitest'
-import { getColorName, BOUNDARIES } from '../src/color'
+import { computeMarkerOffsets } from '../src/canvas/spectrum-bar'
+import { BOUNDARIES } from '../src/color'
 
-describe('spectrum bar label positioning', () => {
-  it('verifies label midpoints fall in correct color regions', () => {
-    // Use standard boundaries for this test
-    const boundaries = BOUNDARIES.map(b => b.standardHue)
-    // [18, 48, 78, 163, 258, 300, 345]
+describe('computeMarkerOffsets', () => {
+  it('returns one marker entry per boundary', () => {
+    const boundaries = BOUNDARIES.map((b) => b.standardHue)
+    const offsets = computeMarkerOffsets(boundaries, 700)
+    expect(offsets).toHaveLength(7)
+  })
 
-    const expectedColors: Array<'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'violet' | 'pink'> = [
-      'red',
-      'orange',
-      'yellow',
-      'green',
-      'blue',
-      'violet',
-      'pink',
-    ]
-
-    // Simulate the fixed drawColorLabels logic
-    for (let i = 0; i < 7; i++) {
-      const startHue = boundaries[(i + 6) % 7]
-      const endHue = boundaries[i]
-
-      // Compute circular midpoint (simplified version of circularMidpoint)
-      const aRad = (startHue * Math.PI) / 180
-      const bRad = (endHue * Math.PI) / 180
-      const sinMean = (Math.sin(aRad) + Math.sin(bRad)) / 2
-      const cosMean = (Math.cos(aRad) + Math.cos(bRad)) / 2
-      const midRad = Math.atan2(sinMean, cosMean)
-      const midHue = ((midRad * 180) / Math.PI + 360) % 360
-
-      // Verify the label's midpoint falls in the correct color region
-      const colorAtMidpoint = getColorName(midHue, boundaries)
-      expect(colorAtMidpoint).toBe(expectedColors[i])
+  it('has zero degreeDiff when user boundaries match standard', () => {
+    const boundaries = BOUNDARIES.map((b) => b.standardHue)
+    const offsets = computeMarkerOffsets(boundaries, 700)
+    for (const offset of offsets) {
+      expect(offset.degreeDiff).toBeCloseTo(0, 5)
+      expect(offset.userX).toBeCloseTo(offset.standardX, 5)
     }
+  })
+
+  it('normalizes differences into (-180, 180] for wrap-around values', () => {
+    const boundaries = [350, 48, 78, 163, 258, 300, 5]
+    const offsets = computeMarkerOffsets(boundaries, 700)
+    expect(offsets[0].degreeDiff).toBeCloseTo(-28, 0)
+    expect(offsets[6].degreeDiff).toBeCloseTo(20, 0)
+    for (const offset of offsets) {
+      expect(offset.degreeDiff).toBeGreaterThanOrEqual(-180)
+      expect(offset.degreeDiff).toBeLessThanOrEqual(180)
+    }
+  })
+
+  it('falls back to standard hue when boundary value is missing', () => {
+    const partial = [18, 48]
+    const offsets = computeMarkerOffsets(partial, 700)
+    expect(offsets[2].degreeDiff).toBeCloseTo(0, 5)
+    expect(offsets[6].degreeDiff).toBeCloseTo(0, 5)
   })
 })

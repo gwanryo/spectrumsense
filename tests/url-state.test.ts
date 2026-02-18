@@ -97,6 +97,52 @@ describe('decodeResult', () => {
     expect(() => decodeResult('null')).not.toThrow()
     expect(() => decodeResult('undefined')).not.toThrow()
   })
+
+  it('returns null for invalid mode byte', () => {
+    const bytes = new Uint8Array(16)
+    const view = new DataView(bytes.buffer)
+    for (let i = 0; i < 7; i++) {
+      view.setUint16(i * 2, 100, false)
+    }
+    view.setUint8(14, 2)
+    view.setUint8(15, 0)
+
+    const encoded = btoa(String.fromCharCode(...bytes))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '')
+
+    expect(decodeResult(encoded)).toBeNull()
+  })
+
+  it('falls back to en for unknown locale byte', () => {
+    const bytes = new Uint8Array(16)
+    const view = new DataView(bytes.buffer)
+    for (let i = 0; i < 7; i++) {
+      view.setUint16(i * 2, 100, false)
+    }
+    view.setUint8(14, 0)
+    view.setUint8(15, 99)
+
+    const encoded = btoa(String.fromCharCode(...bytes))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '')
+
+    const decoded = decodeResult(encoded)
+    expect(decoded).not.toBeNull()
+    expect(decoded!.locale).toBe('en')
+  })
+
+  it('returns null for valid-base64 but wrong payload length', () => {
+    const bytes = new Uint8Array(15)
+    const encoded = btoa(String.fromCharCode(...bytes))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '')
+
+    expect(decodeResult(encoded)).toBeNull()
+  })
 })
 
 describe('buildShareUrl', () => {
