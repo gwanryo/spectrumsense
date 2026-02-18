@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  countOscillations,
   getNextHue,
   getResult,
   initBinarySearch,
@@ -80,13 +81,23 @@ describe('isComplete', () => {
     expect(isComplete(state)).toBe(false)
   })
 
-  it('returns true after maxSteps choices', () => {
+  it('returns true after maxSteps choices (non-oscillating)', () => {
+    const boundary = BOUNDARIES[1]
+    let state = initBinarySearch(boundary, 6)
+    for (let i = 0; i < 6; i++) {
+      state = recordChoice(state, true)
+    }
+    expect(isComplete(state)).toBe(true)
+  })
+
+  it('extends maxSteps when oscillation exceeds threshold', () => {
     const boundary = BOUNDARIES[1]
     let state = initBinarySearch(boundary, 6)
     for (let i = 0; i < 6; i++) {
       state = recordChoice(state, i % 2 === 0)
     }
-    expect(isComplete(state)).toBe(true)
+    expect(isComplete(state)).toBe(false)
+    expect(state.maxSteps).toBeGreaterThan(6)
   })
 })
 
@@ -190,6 +201,23 @@ describe('CRITICAL: Pink->Red wrap-around (boundary index 6)', () => {
     for (const hue of hues) {
       expect(Math.abs(hue - 181)).toBeGreaterThan(50)
     }
+  })
+})
+
+describe('countOscillations', () => {
+  it('returns 0 for consistent choices', () => {
+    expect(countOscillations([true, true, true])).toBe(0)
+    expect(countOscillations([false, false, false])).toBe(0)
+  })
+
+  it('counts direction changes', () => {
+    expect(countOscillations([true, false, true])).toBe(2)
+    expect(countOscillations([true, false, true, false, true, false])).toBe(5)
+  })
+
+  it('returns 0 for empty or single-element arrays', () => {
+    expect(countOscillations([])).toBe(0)
+    expect(countOscillations([true])).toBe(0)
   })
 })
 

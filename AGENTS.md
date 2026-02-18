@@ -22,8 +22,8 @@
 src/
 ├── types.ts          # 모든 타입 정의 (ColorName, Boundary, TestState, TestResult 등)
 ├── color.ts          # BOUNDARIES 배열 (7개), getColorName(), circularMidpoint(), normalizeHue()
-├── binary-search.ts  # 이진 탐색 알고리즘 (데이터 기반, 경계 개수 무관하게 동작)
-├── state-machine.ts  # 테스트 상태 머신 (데이터 기반, BOUNDARIES.length 사용)
+├── binary-search.ts  # 이진 탐색 알고리즘 (데이터 기반, 적응적 스텝 확장, oscillation 감지)
+├── state-machine.ts  # 테스트 상태 머신 (라운드별 셔플, 캐치 트라이얼, 좌우 카운터밸런싱)
 ├── result.ts         # 편차 계산, 색상 영역 계산
 ├── url-state.ts      # 결과 인코딩/디코딩 (16바이트 바이너리 → Base64URL)
 ├── sharing.ts        # X/Twitter 공유, 클립보드 복사
@@ -38,9 +38,9 @@ src/
 │   └── results.ts    # 결과 페이지
 ├── i18n/
 │   ├── index.ts      # i18n 초기화, t() 함수
-│   ├── en.json       # 영어 (47개 키)
-│   ├── ko.json       # 한국어 (47개 키)
-│   └── ja.json       # 일본어 (47개 키)
+│   ├── en.json       # 영어 (53개 키)
+│   ├── ko.json       # 한국어 (53개 키)
+│   └── ja.json       # 일본어 (53개 키)
 └── styles/
     └── main.css      # CSS 커스텀 프로퍼티, 전역 스타일
 ```
@@ -49,8 +49,8 @@ src/
 ```
 tests/
 ├── color.test.ts         # BOUNDARIES, getColorName, circularMidpoint (21 tests)
-├── binary-search.test.ts # 수렴 테스트, 7개 경계 (20 tests)
-├── state-machine.test.ts # 상태 전이, 42/21 문항 (17 tests)
+├── binary-search.test.ts # 수렴 테스트, 7개 경계, oscillation (24 tests)
+├── state-machine.test.ts # 상태 전이, 셔플, 캐치 트라이얼, 적응적 스텝 (23 tests)
 ├── url-state.test.ts     # 인코딩/디코딩 round-trip (13 tests)
 ├── result.test.ts        # 편차/영역 계산 (13 tests)
 ├── i18n.test.ts          # 3개 로케일 키 일치 검증 (9 tests)
@@ -65,6 +65,17 @@ tests/
 - Pink은 Violet과 Red 사이에 추가 (300°~345°)
 - P→R 경계의 searchRange.high = 390 (360° 래핑 처리)
 - `binary-search.ts`와 `state-machine.ts`는 **데이터 기반**으로 동작하여 경계 개수 변경 시 코드 수정 불필요
+
+### 테스트 신뢰성 시스템 (Psychometric Reliability)
+- **라운드별 경계 셔플**: Fisher-Yates 알고리즘으로 매 라운드마다 경계 순서를 무작위화 (순서 효과/프라이밍 효과 방지)
+- **좌우 카운터밸런싱**: 매 질문마다 50% 확률로 버튼 라벨을 좌우 반전 (위치 편향 상쇄)
+- **색순응 리셋**: 인터스티셜 1200ms (500ms에서 상향) — 중성 회색 #808080으로 이전 색상 잔상 제거
+- **최소 응답 시간**: 버튼 300ms 비활성화 — 색상 인지 전의 무의식적 클릭 방지
+- **캐치 트라이얼**: 매 라운드 종료 후 1회 (이전 라운드 질문 중 하나를 반복). 결과에 내적 일관성 점수(consistency score) 제공
+- **워밍업**: 테스트 시작 전 2개의 연습 문항 (명확한 색상) — 결과에 미반영
+- **적응적 스텝**: choices[] 배열에서 oscillation 감지 → 3회 이상 방향 전환 시 maxSteps를 1~2 확장 (최대 +2)
+- **환경 체크**: 테스트 전 화면 밝기, 야간 모드, 조명 환경 안내 화면 표시
+- **테스트 페이지 흐름**: 환경 체크 → 워밍업(2Q) → 본 테스트(48Q normal / 24Q refine, 적응적 확장 가능)
 
 ### URL 인코딩 포맷
 - 16바이트 바이너리 → Base64URL
@@ -101,7 +112,7 @@ tests/
 
 ```bash
 npm run dev        # 개발 서버 (localhost:5173)
-npm test           # vitest run (94 tests)
+npm test           # vitest run (104 tests)
 npm run test:watch # vitest watch mode
 npm run build      # tsc && vite build
 npm run preview    # 빌드 결과물 프리뷰 서버

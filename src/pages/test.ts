@@ -1,4 +1,4 @@
-import type { TestResult } from '../types'
+import type { Question, TestResult } from '../types'
 import {
   createTestSession,
   getCurrentQuestion,
@@ -12,22 +12,114 @@ import { t, getCurrentLocale } from '../i18n/index'
 import { encodeResult } from '../url-state'
 import { navigateTo } from '../router'
 
-const INTERSTITIAL_DURATION = 500
+const INTERSTITIAL_DURATION = 1200
 const INTERSTITIAL_COLOR = '#808080'
+const MIN_RESPONSE_TIME_MS = 300
 
-/**
- * @param mode 'normal' (36 questions) or 'refine' (18 questions)
- * @param previousResults required for refine mode — narrows prior boundaries
- */
+const WARMUP_QUESTIONS: { hue: number; from: string; to: string }[] = [
+  { hue: 0, from: 'colors.red', to: 'colors.orange' },
+  { hue: 200, from: 'colors.green', to: 'colors.blue' },
+]
+
 export function renderTest(
   container: HTMLElement,
   mode: 'normal' | 'refine' = 'normal',
   previousResults?: TestResult
 ): void {
+  injectTestStyles()
+  document.body.style.overflow = 'hidden'
+  showEnvironmentCheck(container, () => {
+    runWarmup(container, 0, () => {
+      startRealTest(container, mode, previousResults)
+    })
+  })
+}
+
+function showEnvironmentCheck(
+  container: HTMLElement,
+  onReady: () => void
+): void {
+  container.innerHTML = `
+    <div class="test-page-wrapper">
+      <div class="test-env-check">
+        <h2 class="test-env-title">${t('test.env_title')}</h2>
+        <ul class="test-env-list">
+          <li>${t('test.env_brightness')}</li>
+          <li>${t('test.env_nightmode')}</li>
+          <li>${t('test.env_lighting')}</li>
+        </ul>
+        <button class="test-confirmation-btn test-confirmation-btn-primary" id="btn-env-ready">
+          ${t('test.env_ready')}
+        </button>
+      </div>
+    </div>
+  `
+  container.querySelector<HTMLButtonElement>('#btn-env-ready')!
+    .addEventListener('click', onReady)
+}
+
+function runWarmup(
+  container: HTMLElement,
+  index: number,
+  onComplete: () => void
+): void {
+  if (index >= WARMUP_QUESTIONS.length) {
+    onComplete()
+    return
+  }
+
+  const wq = WARMUP_QUESTIONS[index]
+  const swapped = Math.random() < 0.5
+  const firstLabel = swapped ? wq.to : wq.from
+  const secondLabel = swapped ? wq.from : wq.to
+
+  container.innerHTML = `
+    <div class="test-page-wrapper">
+      <div class="test-page" id="test-page-root" style="background-color: ${hslString(wq.hue)}">
+        <div class="test-progress-bar-container test-overlay">
+          <div class="test-progress-text">
+            ${t('test.warmup_label')} ${index + 1} / ${WARMUP_QUESTIONS.length}
+          </div>
+        </div>
+        <div class="test-buttons-container">
+          <p class="test-instruction test-overlay">${t('test.instruction')}</p>
+          <div class="test-choices">
+            <button class="test-choice-btn" id="btn-first" type="button" disabled>${t(firstLabel)}</button>
+            <button class="test-choice-btn" id="btn-second" type="button" disabled>${t(secondLabel)}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `
+
+  const btnFirst = container.querySelector<HTMLButtonElement>('#btn-first')!
+  const btnSecond = container.querySelector<HTMLButtonElement>('#btn-second')!
+
+  setTimeout(() => {
+    btnFirst.disabled = false
+    btnSecond.disabled = false
+  }, MIN_RESPONSE_TIME_MS)
+
+  function next(): void {
+    btnFirst.disabled = true
+    btnSecond.disabled = true
+    const root = container.querySelector<HTMLElement>('#test-page-root')!
+    root.style.backgroundColor = INTERSTITIAL_COLOR
+    setTimeout(() => runWarmup(container, index + 1, onComplete), INTERSTITIAL_DURATION)
+  }
+
+  btnFirst.addEventListener('click', next)
+  btnSecond.addEventListener('click', next)
+}
+
+function startRealTest(
+  container: HTMLElement,
+  mode: 'normal' | 'refine',
+  previousResults?: TestResult
+): void {
   const locale = getCurrentLocale()
   let state = createTestSession(mode, locale, previousResults)
-
-  injectTestStyles()
+  let currentQuestion: Question
 
   container.innerHTML = `
     <div class="test-page-wrapper">
@@ -55,8 +147,6 @@ export function renderTest(
   const progressFill = container.querySelector<HTMLElement>('#test-progress-fill')!
   const btnFirst = container.querySelector<HTMLButtonElement>('#btn-first')!
   const btnSecond = container.querySelector<HTMLButtonElement>('#btn-second')!
-
-  document.body.style.overflow = 'hidden'
 
   function showConfirmationScreen(results: TestResult): void {
     const encoded = encodeResult(results)
@@ -91,28 +181,33 @@ export function renderTest(
       return
     }
 
-    const question = getCurrentQuestion(state)
+    currentQuestion = getCurrentQuestion(state)
 
-    root.style.backgroundColor = hslString(question.hue)
+    root.style.backgroundColor = hslString(currentQuestion.hue)
 
     progressText.textContent = t('test.progress', {
-      n: question.questionNumber,
-      total: question.totalQuestions,
+      n: currentQuestion.questionNumber,
+      total: currentQuestion.totalQuestions,
     })
-    progressFill.style.width = `${question.progress * 100}%`
+    progressFill.style.width = `${currentQuestion.progress * 100}%`
 
-    btnFirst.textContent = t(question.firstLabel)
-    btnSecond.textContent = t(question.secondLabel)
+    btnFirst.textContent = t(currentQuestion.firstLabel)
+    btnSecond.textContent = t(currentQuestion.secondLabel)
 
-    btnFirst.disabled = false
-    btnSecond.disabled = false
+    btnFirst.disabled = true
+    btnSecond.disabled = true
+    setTimeout(() => {
+      btnFirst.disabled = false
+      btnSecond.disabled = false
+    }, MIN_RESPONSE_TIME_MS)
   }
 
   function handleChoice(choseFirst: boolean): void {
     btnFirst.disabled = true
     btnSecond.disabled = true
 
-    state = answerQuestion(state, choseFirst)
+    const actualChoice = currentQuestion.swapped ? !choseFirst : choseFirst
+    state = answerQuestion(state, actualChoice)
 
     if (isTestComplete(state)) {
       updateDisplay()
@@ -206,6 +301,45 @@ function injectTestStyles(): void {
 
     .test-choices .test-choice-btn {
       flex: 1;
+    }
+
+    .test-env-check {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      padding: 2rem;
+      text-align: center;
+      width: 100%;
+      height: 100%;
+      animation: fadeIn 0.5s ease both;
+    }
+
+    .test-env-title {
+      font-family: var(--font-display, 'Instrument Serif', Georgia, serif);
+      font-size: 2rem;
+      font-weight: 400;
+      color: #ffffff;
+      margin: 0;
+    }
+
+    .test-env-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      color: rgba(255, 255, 255, 0.65);
+      font-size: 1rem;
+      font-weight: 300;
+      line-height: 1.6;
+    }
+
+    .test-env-list li::before {
+      content: '→ ';
+      color: rgba(255, 255, 255, 0.3);
     }
 
     .test-confirmation {

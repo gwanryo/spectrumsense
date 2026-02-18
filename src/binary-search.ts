@@ -1,6 +1,10 @@
 import type { BinarySearchState, Boundary } from './types'
 import { circularMidpoint, normalizeHue } from './color'
 
+const OSCILLATION_CHECK_STEP = 3
+const OSCILLATION_THRESHOLD = 3
+const MAX_EXTRA_STEPS = 2
+
 export function initBinarySearch(
   boundary: Boundary,
   maxSteps: number = 6,
@@ -32,6 +36,8 @@ export function initBinarySearch(
     currentHue,
     step: 0,
     maxSteps,
+    originalMaxSteps: maxSteps,
+    choices: [],
   }
 }
 
@@ -58,6 +64,18 @@ export function recordChoice(
   }
 
   const newHue = getCircularMidpointInRange(newLow, newHigh)
+  const newChoices = [...state.choices, choseFirst]
+
+  let { maxSteps } = state
+  if (
+    state.step + 1 >= OSCILLATION_CHECK_STEP &&
+    maxSteps < state.originalMaxSteps + MAX_EXTRA_STEPS
+  ) {
+    const oscillations = countOscillations(newChoices)
+    if (oscillations >= OSCILLATION_THRESHOLD) {
+      maxSteps = Math.min(maxSteps + 1, state.originalMaxSteps + MAX_EXTRA_STEPS)
+    }
+  }
 
   return {
     ...state,
@@ -65,6 +83,8 @@ export function recordChoice(
     high: newHigh,
     currentHue: newHue,
     step: state.step + 1,
+    choices: newChoices,
+    maxSteps,
   }
 }
 
@@ -74,6 +94,14 @@ export function isComplete(state: BinarySearchState): boolean {
 
 export function getResult(state: BinarySearchState): number {
   return normalizeHue(getCircularMidpointInRange(state.low, state.high))
+}
+
+export function countOscillations(choices: boolean[]): number {
+  let count = 0
+  for (let i = 1; i < choices.length; i++) {
+    if (choices[i] !== choices[i - 1]) count++
+  }
+  return count
 }
 
 function getCircularMidpointInRange(low: number, high: number): number {

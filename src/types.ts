@@ -14,8 +14,10 @@ export interface BinarySearchState {
   low: number;       // current search low bound (hue degrees)
   high: number;      // current search high bound (hue degrees)
   currentHue: number; // current test hue (midpoint)
-  step: number;       // current step (0-5 for normal, 0-2 for refine)
-  maxSteps: number;   // 6 for normal, 3 for refine
+  step: number;       // current step (0-based)
+  maxSteps: number;   // may increase via adaptive extension
+  originalMaxSteps: number;  // initial maxSteps before adaptive extension
+  choices: boolean[];  // history of choices for oscillation detection
 }
 
 export interface Question {
@@ -24,17 +26,42 @@ export interface Question {
   secondLabel: string;      // second choice color name
   progress: number;         // 0-1 fraction of completion
   questionNumber: number;   // 1-indexed question number
-  totalQuestions: number;   // 42 or 21
+  totalQuestions: number;   // dynamic total (real + catch trials)
+  swapped: boolean;         // whether firstLabel/secondLabel are position-swapped
+}
+
+export interface QuestionLogEntry {
+  boundaryIndex: number;
+  hue: number;
+  choice: boolean;
+  round: number;
+}
+
+export interface CatchTrialData {
+  boundaryIndex: number;
+  hue: number;
+  expectedChoice: boolean;
 }
 
 export interface TestState {
   mode: 'normal' | 'refine';
   boundaries: BinarySearchState[];
   currentBoundaryIndex: number;
-  currentStep: number;      // global step counter (0-41 or 0-20)
-  totalSteps: number;       // 42 for normal, 21 for refine
-  phase: 'testing' | 'interstitial' | 'complete';
+  currentStep: number;      // global step counter (real + catch trials)
+  totalSteps: number;       // dynamic: sum of boundary maxSteps + catch trial count
+  phase: 'testing' | 'catch_trial' | 'interstitial' | 'complete';
   previousResults?: TestResult;  // for refine mode
+
+  boundaryOrder: number[];   // shuffled boundary indices for current round
+  roundPosition: number;     // position within current round
+  currentRound: number;      // 0-based round counter
+
+  currentSwapped: boolean;   // left-right counterbalancing for current question
+
+  pendingCatchTrial: boolean;
+  activeCatchTrial: CatchTrialData | null;
+  catchTrialResults: boolean[];
+  questionLog: QuestionLogEntry[];
 }
 
 export interface TestResult {
