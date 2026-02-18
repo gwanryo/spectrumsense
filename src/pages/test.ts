@@ -64,7 +64,7 @@ function runWarmup(
   onComplete: () => void
 ): void {
   if (index >= WARMUP_QUESTIONS.length) {
-    onComplete()
+    showWarmupComplete(container, onComplete)
     return
   }
 
@@ -110,6 +110,30 @@ function runWarmup(
 
   btnFirst.addEventListener('click', next)
   btnSecond.addEventListener('click', next)
+}
+
+function showWarmupComplete(
+  container: HTMLElement,
+  onReady: () => void
+): void {
+  container.innerHTML = `
+    <div class="test-page-wrapper">
+      <div class="test-warmup-complete">
+        <div class="test-warmup-complete-icon" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h2 class="test-warmup-complete-title">${t('test.real_test_title')}</h2>
+        <p class="test-warmup-complete-message">${t('test.real_test_message')}</p>
+        <button class="test-confirmation-btn test-confirmation-btn-primary" id="btn-start-real">
+          ${t('test.real_test_start')}
+        </button>
+      </div>
+    </div>
+  `
+  container.querySelector<HTMLButtonElement>('#btn-start-real')!
+    .addEventListener('click', onReady)
 }
 
 function startRealTest(
@@ -409,21 +433,13 @@ function injectTestStyles(): void {
     }
 
     .test-confirmation-btn-primary {
-      background: linear-gradient(
-        90deg,
-        hsl(0, 100%, 55%),
-        hsl(30, 100%, 55%),
-        hsl(55, 100%, 50%),
-        hsl(120, 80%, 45%),
-        hsl(210, 100%, 55%),
-        hsl(270, 80%, 60%),
-        hsl(320, 80%, 55%),
-        hsl(360, 100%, 55%)
-      );
-      background-size: 200% 100%;
-      color: #ffffff;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      background: var(--accent, #2dd4bf);
+      color: #0a0a14;
       position: relative;
+    }
+
+    .test-confirmation-btn-primary:hover {
+      background: var(--accent-hover, #5eead4);
     }
 
     .test-confirmation-btn-primary::before {
@@ -431,10 +447,56 @@ function injectTestStyles(): void {
       position: absolute;
       inset: 0;
       border-radius: inherit;
-      background: inherit;
+      background: var(--accent, #2dd4bf);
       filter: blur(16px);
-      opacity: 0.4;
+      opacity: 0.3;
       z-index: -1;
+    }
+
+    .test-warmup-complete {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      padding: 2rem;
+      text-align: center;
+      width: 100%;
+      height: 100%;
+      animation: fadeIn 0.5s ease both;
+    }
+
+    .test-warmup-complete-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: rgba(45, 212, 191, 0.12);
+      color: var(--accent, #2dd4bf);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .test-warmup-complete-title {
+      font-family: var(--font-display, 'Instrument Serif', Georgia, serif);
+      font-size: 2rem;
+      font-weight: 400;
+      color: #ffffff;
+      margin: 0;
+      animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-delay: 0.1s;
+    }
+
+    .test-warmup-complete-message {
+      font-size: 1rem;
+      font-weight: 300;
+      color: rgba(255, 255, 255, 0.5);
+      margin: 0;
+      max-width: 340px;
+      line-height: 1.6;
+      animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-delay: 0.2s;
     }
 
     .test-confirmation-btn-secondary {

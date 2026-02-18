@@ -17,23 +17,58 @@ export function renderLanding(
       </header>
 
       <main class="landing-main">
-        <div class="landing-content">
-          <div class="spectrum-preview" aria-hidden="true"></div>
+        <div class="landing-hero">
+          <div class="landing-content">
+            <div class="spectrum-preview" aria-hidden="true"></div>
 
-          <h1 class="landing-title">${t('landing.title')}</h1>
-          <p class="landing-subtitle">${t('landing.subtitle')}</p>
-          <p class="landing-description">${t('landing.description')}</p>
-          <p class="landing-duration">${t('landing.duration')}</p>
+            <h1 class="landing-title">${t('landing.title')}</h1>
+            <p class="landing-subtitle">${t('landing.subtitle')}</p>
+            <p class="landing-description">${t('landing.description')}</p>
+            <p class="landing-duration">${t('landing.duration')}</p>
 
-          <button class="btn-primary start-btn" id="start-test-btn">
-            ${t('landing.start')}
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-              <path d="M4 10h12M10 4l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
+            <button class="btn-primary start-btn" id="start-test-btn">
+              ${t('landing.start')}
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M4 10h12M10 4l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
 
-          <p class="landing-disclaimer">${t('landing.disclaimer')}</p>
+            <p class="landing-disclaimer">${t('landing.disclaimer')}</p>
+          </div>
         </div>
+
+        <section class="landing-info">
+          <div class="landing-info-inner">
+            <div class="landing-section">
+              <h2 class="landing-section-title">${t('landing.how_title')}</h2>
+              <div class="landing-steps">
+                <div class="landing-step">
+                  <span class="landing-step-num">1</span>
+                  <p class="landing-step-text">${t('landing.how_step1')}</p>
+                </div>
+                <div class="landing-step">
+                  <span class="landing-step-num">2</span>
+                  <p class="landing-step-text">${t('landing.how_step2')}</p>
+                </div>
+                <div class="landing-step">
+                  <span class="landing-step-num">3</span>
+                  <p class="landing-step-text">${t('landing.how_step3')}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="landing-details">
+              <div class="landing-detail">
+                <h3 class="landing-detail-title">${t('landing.boundaries_title')}</h3>
+                <p class="landing-detail-text">${t('landing.boundaries_desc')}</p>
+              </div>
+              <div class="landing-detail">
+                <h3 class="landing-detail-title">${t('landing.reliability_title')}</h3>
+                <p class="landing-detail-text">${t('landing.reliability_desc')}</p>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
     </div>
   `
@@ -114,9 +149,17 @@ function injectLandingStyles(): void {
     .landing-main {
       flex: 1;
       display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .landing-hero {
+      min-height: calc(100dvh - 72px);
+      display: flex;
       align-items: center;
       justify-content: center;
-      padding: 2rem 1.5rem 5rem;
+      padding: 2rem 1.5rem 3rem;
+      width: 100%;
     }
 
     .landing-content {
@@ -242,12 +285,123 @@ function injectLandingStyles(): void {
       animation-delay: 0.55s;
     }
 
+    .landing-info {
+      width: 100%;
+      padding: 0 1.5rem 5rem;
+      display: flex;
+      justify-content: center;
+      animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-delay: 0.6s;
+    }
+
+    .landing-info-inner {
+      max-width: 660px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 3rem;
+    }
+
+    .landing-section-title {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      color: var(--text-primary);
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .landing-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .landing-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      transition: border-color var(--transition-normal);
+    }
+
+    .landing-step:hover {
+      border-color: var(--border-accent);
+    }
+
+    .landing-step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(45, 212, 191, 0.1);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      flex-shrink: 0;
+    }
+
+    .landing-step-text {
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      font-weight: 300;
+      margin: 0;
+    }
+
+    .landing-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .landing-detail {
+      padding: 1.25rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      transition: border-color var(--transition-normal);
+    }
+
+    .landing-detail:hover {
+      border-color: var(--border-accent);
+    }
+
+    .landing-detail-title {
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .landing-detail-text {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      font-weight: 300;
+      margin: 0;
+    }
+
+    @media (max-width: 480px) {
+      .landing-details {
+        grid-template-columns: 1fr;
+      }
+    }
+
     @media (max-width: 375px) {
       .landing-header {
         padding: 1rem;
       }
-      .landing-main {
-        padding: 1rem 1rem 3rem;
+      .landing-hero {
+        padding: 1rem 1rem 2rem;
       }
       .landing-content {
         gap: 1.25rem;
@@ -255,6 +409,9 @@ function injectLandingStyles(): void {
       .start-btn {
         width: 100%;
         justify-content: center;
+      }
+      .landing-info {
+        padding: 0 1rem 3rem;
       }
     }
   `

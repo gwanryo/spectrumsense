@@ -51,8 +51,15 @@ export function renderResults(container: HTMLElement): void {
            <!-- Disclaimer -->
            <p class="results-disclaimer">${t('results.disclaimer')}</p>
 
-           <!-- Citation -->
-           <p class="results-citation">${t('results.citation')}</p>
+           <!-- References Footer -->
+           <footer class="results-references">
+             <span class="results-references-label">${t('results.citation')}</span>
+             <div class="results-references-links">
+               <a href="https://blog.xkcd.com/2010/05/03/color-survey-results/" target="_blank" rel="noopener noreferrer">XKCD Color Survey</a>
+               <a href="https://en.wikipedia.org/wiki/Munsell_color_system" target="_blank" rel="noopener noreferrer">Munsell Color System</a>
+               <a href="https://en.wikipedia.org/wiki/CIE_1931_color_space" target="_blank" rel="noopener noreferrer">CIE 1931</a>
+             </div>
+           </footer>
 
            <!-- Action Buttons -->
           <section class="results-actions">
@@ -360,18 +367,45 @@ function injectResultsStyles(): void {
       animation-delay: 0.5s;
     }
 
-    .results-citation {
-      font-size: 0.75rem;
+    .results-references {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.6875rem;
       color: var(--text-muted);
-      line-height: 1.5;
       margin-bottom: 2rem;
-      padding: 0.75rem 1rem;
-      background: var(--bg-secondary);
-      border-radius: var(--radius-sm);
-      border-left: 3px solid var(--border);
-      opacity: 0.85;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
       animation: fadeIn 0.6s ease both;
       animation-delay: 0.55s;
+      flex-wrap: wrap;
+    }
+
+    .results-references-label {
+      flex-shrink: 0;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .results-references-links {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .results-references-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 0.2rem 0.5rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      transition: all var(--transition-fast);
+    }
+
+    .results-references-links a:hover {
+      color: var(--accent);
+      border-color: var(--border-accent);
     }
 
     .results-actions {

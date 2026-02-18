@@ -179,7 +179,7 @@ function drawColorLabels(
     // circularMidpoint handles 0°/360° wrap (naive average fails at violet→red boundary)
     const midHue = circularMidpoint(startHue, endHue)
 
-    const x = Math.round((midHue / 360) * barW)
+    const rawX = Math.round((midHue / 360) * barW)
     const centerY = pillY + pillH / 2
 
     const label = labels[i] ?? DEFAULT_COLOR_LABELS[i]
@@ -188,6 +188,10 @@ function drawColorLabels(
     const paddingV = 2
     const pillW = metrics.width + paddingH * 2
     const pillR = (pillH + paddingV * 2) / 2
+
+    // Clamp x to prevent label overflow at canvas edges
+    const halfPill = Math.ceil(pillW / 2)
+    const x = Math.max(halfPill + 2, Math.min(barW - halfPill - 2, rawX))
 
     ctx.fillStyle = 'rgba(10, 10, 15, 0.75)'
     ctx.beginPath()
