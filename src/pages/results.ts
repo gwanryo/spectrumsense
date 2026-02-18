@@ -43,13 +43,13 @@ export function renderResults(container: HTMLElement): void {
             <canvas id="spectrum-bar-canvas" class="spectrum-bar-canvas"></canvas>
           </section>
 
+           <!-- Disclaimer -->
+           <p class="results-disclaimer">${t('results.disclaimer')}</p>
+
           <!-- Deviation Table -->
           <section class="results-section">
             <div class="deviation-grid" id="deviation-grid"></div>
           </section>
-
-           <!-- Disclaimer -->
-           <p class="results-disclaimer">${t('results.disclaimer')}</p>
 
            <!-- Action Buttons -->
           <section class="results-actions">
