@@ -73,12 +73,16 @@ function injectLandingStyles(): void {
       display: flex;
       justify-content: flex-end;
       padding: 1.5rem 2rem;
+      animation: fadeIn 0.8s ease both;
+      animation-delay: 0.6s;
     }
 
     .lang-switcher {
       display: flex;
       gap: 0.25rem;
-      background: var(--bg-secondary);
+      background: rgba(14, 14, 24, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       padding: 0.25rem;
@@ -89,11 +93,12 @@ function injectLandingStyles(): void {
       border-radius: calc(var(--radius-lg) - 4px);
       font-size: 0.8125rem;
       font-weight: 500;
-      color: var(--text-secondary);
+      color: var(--text-muted);
       background: transparent;
-      transition: var(--transition-fast);
+      transition: all var(--transition-fast);
       cursor: pointer;
       border: none;
+      font-family: var(--font-sans);
     }
 
     .lang-btn:hover {
@@ -103,7 +108,7 @@ function injectLandingStyles(): void {
     .lang-btn.active {
       background: var(--bg-card);
       color: var(--text-primary);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
     }
 
     .landing-main {
@@ -111,57 +116,97 @@ function injectLandingStyles(): void {
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 2rem 1.5rem 4rem;
+      padding: 2rem 1.5rem 5rem;
     }
 
     .landing-content {
-      max-width: 600px;
+      max-width: 620px;
       width: 100%;
       text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 1.25rem;
+      gap: 1.5rem;
     }
 
     .spectrum-preview {
       width: 100%;
-      max-width: 400px;
-      height: 8px;
-      border-radius: 4px;
+      max-width: 440px;
+      height: 14px;
+      border-radius: 7px;
       background: linear-gradient(
         to right,
-        hsl(0, 100%, 50%),
-        hsl(48, 100%, 50%),
-        hsl(78, 100%, 50%),
-        hsl(163, 100%, 50%),
-        hsl(258, 100%, 50%),
-        hsl(300, 100%, 50%),
-        hsl(330, 100%, 50%),
-        hsl(360, 100%, 50%)
+        hsl(0, 100%, 55%),
+        hsl(30, 100%, 55%),
+        hsl(55, 100%, 50%),
+        hsl(120, 80%, 45%),
+        hsl(210, 100%, 55%),
+        hsl(270, 80%, 60%),
+        hsl(320, 80%, 55%),
+        hsl(360, 100%, 55%)
       );
-      margin-bottom: 0.5rem;
-      opacity: 0.85;
+      margin-bottom: 0.75rem;
+      position: relative;
+      animation: fadeInUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-delay: 0s;
+    }
+
+    .spectrum-preview::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 11px;
+      background: inherit;
+      filter: blur(16px);
+      opacity: 0.55;
+      z-index: -1;
+      animation: spectrumPulse 4s ease-in-out infinite;
+    }
+
+    .spectrum-preview::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(
+        to right,
+        transparent 0%,
+        rgba(255, 255, 255, 0.15) 45%,
+        rgba(255, 255, 255, 0.25) 50%,
+        rgba(255, 255, 255, 0.15) 55%,
+        transparent 100%
+      );
+      background-size: 250% 100%;
+      animation: shimmer 4s ease-in-out infinite;
     }
 
     .landing-title {
       color: var(--text-primary);
       margin: 0;
+      font-family: var(--font-display);
+      animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-delay: 0.1s;
     }
 
     .landing-subtitle {
       font-size: 1.125rem;
       color: var(--text-secondary);
       margin: 0;
-      font-weight: 400;
+      font-weight: 300;
+      letter-spacing: 0.01em;
+      animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-delay: 0.18s;
     }
 
     .landing-description {
       font-size: 0.9375rem;
       color: var(--text-muted);
-      line-height: 1.7;
+      line-height: 1.8;
       margin: 0;
-      max-width: 480px;
+      max-width: 460px;
+      font-weight: 300;
+      animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-delay: 0.26s;
     }
 
     .landing-duration {
@@ -169,16 +214,21 @@ function injectLandingStyles(): void {
       color: var(--text-muted);
       margin: 0;
       font-family: var(--font-mono);
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
+      font-weight: 400;
+      animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-delay: 0.32s;
     }
 
     .start-btn {
-      margin-top: 0.5rem;
+      margin-top: 0.75rem;
       font-size: 1.0625rem;
-      padding: 1rem 2.5rem;
+      padding: 1rem 2.75rem;
       display: flex;
       align-items: center;
       gap: 0.625rem;
+      animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-delay: 0.4s;
     }
 
     .landing-disclaimer {
@@ -187,6 +237,9 @@ function injectLandingStyles(): void {
       margin: 0;
       max-width: 400px;
       line-height: 1.5;
+      font-weight: 300;
+      animation: fadeIn 0.8s ease both;
+      animation-delay: 0.55s;
     }
 
     @media (max-width: 375px) {
@@ -195,6 +248,9 @@ function injectLandingStyles(): void {
       }
       .landing-main {
         padding: 1rem 1rem 3rem;
+      }
+      .landing-content {
+        gap: 1.25rem;
       }
       .start-btn {
         width: 100%;

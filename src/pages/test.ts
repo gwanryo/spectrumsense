@@ -146,7 +146,7 @@ function injectTestStyles(): void {
       display: flex;
       align-items: center;
       justify-content: center;
-      background-color: var(--bg-primary, #0a0a0f);
+      background-color: var(--bg-primary, #06060c);
       overflow: hidden;
     }
 
@@ -159,44 +159,49 @@ function injectTestStyles(): void {
       justify-content: space-between;
       transition: background-color 0ms;
       overflow: hidden;
+      box-shadow: 0 0 80px rgba(0, 0, 0, 0.4);
     }
 
     .test-progress-bar-container {
       margin: 1.25rem 1.25rem 0;
-      padding: 0.75rem 1rem;
+      padding: 0.75rem 1.25rem;
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
     }
 
     .test-progress-text {
-      font-size: 0.875rem;
+      font-size: 0.8125rem;
       font-weight: 500;
-      color: #ffffff;
+      font-family: var(--font-mono, 'JetBrains Mono', monospace);
+      color: rgba(255, 255, 255, 0.85);
       text-align: center;
+      letter-spacing: 0.04em;
     }
 
     .test-buttons-container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.75rem;
-      padding: 0 1.25rem 2rem;
+      gap: 1rem;
+      padding: 0 1.5rem 2.25rem;
     }
 
     .test-instruction {
       font-size: 0.9375rem;
-      color: rgba(255, 255, 255, 0.9);
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.85);
       text-align: center;
       padding: 0.5rem 1.25rem;
       margin: 0;
+      letter-spacing: 0.01em;
     }
 
     .test-choices {
       display: flex;
-      gap: 0.75rem;
+      gap: 0.875rem;
       width: 100%;
-      max-width: 480px;
+      max-width: 500px;
     }
 
     .test-choices .test-choice-btn {
@@ -208,27 +213,34 @@ function injectTestStyles(): void {
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 1.5rem;
+      gap: 1.75rem;
       padding: 2rem;
       text-align: center;
       width: 100%;
       height: 100%;
+      animation: fadeIn 0.5s ease both;
     }
 
     .test-confirmation-title {
-      font-size: 2.25rem;
-      font-weight: 700;
+      font-family: var(--font-display, 'Instrument Serif', Georgia, serif);
+      font-size: 2.75rem;
+      font-weight: 400;
       color: #ffffff;
       margin: 0;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.01em;
+      animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-delay: 0.1s;
     }
 
     .test-confirmation-prompt {
       font-size: 1rem;
-      color: rgba(255, 255, 255, 0.55);
+      font-weight: 300;
+      color: rgba(255, 255, 255, 0.5);
       margin: 0;
-      max-width: 320px;
-      line-height: 1.5;
+      max-width: 340px;
+      line-height: 1.6;
+      animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-delay: 0.2s;
     }
 
     .test-confirmation-actions {
@@ -236,37 +248,71 @@ function injectTestStyles(): void {
       flex-direction: column;
       gap: 0.75rem;
       width: 100%;
-      max-width: 300px;
+      max-width: 320px;
       margin-top: 0.5rem;
+      animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-delay: 0.35s;
     }
 
     .test-confirmation-btn {
-      padding: 0.9375rem 1.5rem;
-      border-radius: var(--radius-md, 12px);
+      padding: 1rem 1.75rem;
+      border-radius: var(--radius-lg, 20px);
       font-size: 1rem;
       font-weight: 600;
+      font-family: var(--font-sans, 'Outfit', sans-serif);
       cursor: pointer;
       border: none;
-      transition: opacity 0.15s ease;
+      transition: all 0.15s ease;
+    }
+
+    .test-confirmation-btn:hover {
+      transform: translateY(-1px);
     }
 
     .test-confirmation-btn:active {
       opacity: 0.85;
+      transform: translateY(0);
     }
 
     .test-confirmation-btn-primary {
-      background: #ffffff;
-      color: var(--bg-primary, #0a0a0f);
+      background: linear-gradient(
+        90deg,
+        hsl(0, 100%, 55%),
+        hsl(30, 100%, 55%),
+        hsl(55, 100%, 50%),
+        hsl(120, 80%, 45%),
+        hsl(210, 100%, 55%),
+        hsl(270, 80%, 60%),
+        hsl(320, 80%, 55%),
+        hsl(360, 100%, 55%)
+      );
+      background-size: 200% 100%;
+      color: #ffffff;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      position: relative;
+    }
+
+    .test-confirmation-btn-primary::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: inherit;
+      filter: blur(16px);
+      opacity: 0.4;
+      z-index: -1;
     }
 
     .test-confirmation-btn-secondary {
       background: transparent;
-      color: rgba(255, 255, 255, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: rgba(255, 255, 255, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .test-confirmation-btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.05);
+      color: rgba(255, 255, 255, 0.7);
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.18);
     }
 
     @media (max-width: 375px) {
@@ -283,6 +329,10 @@ function injectTestStyles(): void {
 
       .test-choice-btn {
         min-height: 56px;
+      }
+
+      .test-confirmation-title {
+        font-size: 2.25rem;
       }
     }
   `

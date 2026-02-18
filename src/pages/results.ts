@@ -1,10 +1,20 @@
-import type { TestResult } from '../types'
+import type { TestResult, ColorName } from '../types'
 import { readResultFromUrl, buildShareUrl } from '../url-state'
 import { computeDeviations } from '../result'
 import { renderSpectrumBar } from '../canvas/spectrum-bar'
 import { generateResultCard, downloadResultCard } from '../canvas/result-card'
 import { shareTwitter, shareWebApi, copyToClipboard, isWebShareSupported } from '../sharing'
 import { t, getCurrentLocale } from '../i18n/index'
+
+const COLOR_HUE_MAP: Record<ColorName, string> = {
+  red: 'hsl(0, 100%, 50%)',
+  orange: 'hsl(30, 100%, 55%)',
+  yellow: 'hsl(55, 100%, 50%)',
+  green: 'hsl(140, 70%, 45%)',
+  blue: 'hsl(220, 100%, 55%)',
+  violet: 'hsl(270, 80%, 60%)',
+  pink: 'hsl(330, 80%, 55%)',
+}
 
 export function renderResults(container: HTMLElement): void {
   const result = readResultFromUrl()
@@ -101,7 +111,7 @@ function renderDeviationGrid(
 ): void {
   const grid = container.querySelector<HTMLElement>('#deviation-grid')!
 
-  grid.innerHTML = deviations.map((dev) => {
+  grid.innerHTML = deviations.map((dev, i) => {
     const diff = Math.round(dev.difference)
     const absDiff = Math.abs(diff)
     const diffStr = diff === 0 ? '±0°' : diff > 0 ? `+${diff}°` : `${diff}°`
@@ -109,10 +119,18 @@ function renderDeviationGrid(
 
     const fromKey = `colors.${dev.boundary.from}`
     const toKey = `colors.${dev.boundary.to}`
+    const fromColor = COLOR_HUE_MAP[dev.boundary.from]
+    const toColor = COLOR_HUE_MAP[dev.boundary.to]
 
     return `
-      <div class="deviation-card card">
-        <div class="deviation-boundary">${t(fromKey)} ↔ ${t(toKey)}</div>
+      <div class="deviation-card card" style="animation-delay: ${i * 0.08}s">
+        <div class="deviation-card-header">
+          <div class="deviation-swatches">
+            <span class="deviation-swatch" style="background: ${fromColor}"></span>
+            <span class="deviation-swatch" style="background: ${toColor}"></span>
+          </div>
+          <div class="deviation-boundary">${t(fromKey)} ↔ ${t(toKey)}</div>
+        </div>
         <div class="deviation-values">
           <div class="deviation-value">
             <span class="deviation-label">${t('results.your_value')}</span>
@@ -122,7 +140,7 @@ function renderDeviationGrid(
             <span class="deviation-label">${t('results.typical_value')}</span>
             <span class="deviation-hue deviation-hue--muted">${dev.standardHue}°</span>
           </div>
-          <div class="deviation-diff ${diffClass}">${diffStr}</div>
+          <div class="deviation-diff-badge ${diffClass}">${diffStr}</div>
         </div>
       </div>
     `
@@ -201,25 +219,32 @@ function injectResultsStyles(): void {
     }
 
     .results-header {
-      padding: 3rem 0 2rem;
+      padding: 3.5rem 0 2.5rem;
       border-bottom: 1px solid var(--border);
     }
 
     .results-title {
       margin-bottom: 0.5rem;
+      font-family: var(--font-display);
+      animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
 
     .results-subtitle {
       color: var(--text-secondary);
       font-size: 1.0625rem;
+      font-weight: 300;
+      animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-delay: 0.08s;
     }
 
     .results-main {
-      padding-top: 2rem;
+      padding-top: 2.5rem;
     }
 
     .results-section {
-      margin-bottom: 2rem;
+      margin-bottom: 2.5rem;
+      animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-delay: 0.15s;
     }
 
     .spectrum-bar-canvas {
@@ -228,6 +253,8 @@ function injectResultsStyles(): void {
       display: block;
       border-radius: var(--radius-md);
       overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 40px rgba(0, 0, 0, 0.3), 0 0 30px rgba(45, 212, 191, 0.04);
     }
 
     .deviation-grid {
@@ -251,7 +278,27 @@ function injectResultsStyles(): void {
     .deviation-card {
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 0.875rem;
+      animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .deviation-card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .deviation-swatches {
+      display: flex;
+      gap: 0.25rem;
+      flex-shrink: 0;
+    }
+
+    .deviation-swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      box-shadow: 0 0 6px rgba(0, 0, 0, 0.4);
     }
 
     .deviation-boundary {
@@ -291,27 +338,42 @@ function injectResultsStyles(): void {
       font-weight: 400;
     }
 
-    .deviation-diff {
-      font-size: 0.9375rem;
+    .deviation-diff-badge {
+      display: inline-flex;
+      align-self: flex-end;
+      font-size: 0.8125rem;
       font-weight: 700;
       font-family: var(--font-mono);
-      text-align: right;
+      padding: 0.25rem 0.625rem;
+      border-radius: var(--radius-sm);
       margin-top: 0.25rem;
+      letter-spacing: 0.02em;
     }
 
-    .diff-small { color: #00b894; }
-    .diff-medium { color: #fdcb6e; }
-    .diff-large { color: #e17055; }
+    .diff-small {
+      color: var(--diff-small, #34d399);
+      background: rgba(52, 211, 153, 0.1);
+    }
+    .diff-medium {
+      color: var(--diff-medium, #fbbf24);
+      background: rgba(251, 191, 36, 0.1);
+    }
+    .diff-large {
+      color: var(--diff-large, #f87171);
+      background: rgba(248, 113, 113, 0.1);
+    }
 
     .results-disclaimer {
       font-size: 0.8125rem;
       color: var(--text-muted);
       line-height: 1.6;
       margin-bottom: 2rem;
-      padding: 1rem;
+      padding: 1rem 1.25rem;
       background: var(--bg-secondary);
       border-radius: var(--radius-sm);
-      border-left: 3px solid var(--border);
+      border-left: 3px solid var(--border-accent, rgba(45, 212, 191, 0.2));
+      animation: fadeIn 0.6s ease both;
+      animation-delay: 0.5s;
     }
 
     .results-citation {
@@ -319,17 +381,21 @@ function injectResultsStyles(): void {
       color: var(--text-muted);
       line-height: 1.5;
       margin-bottom: 2rem;
-      padding: 0.75rem;
+      padding: 0.75rem 1rem;
       background: var(--bg-secondary);
       border-radius: var(--radius-sm);
       border-left: 3px solid var(--border);
       opacity: 0.85;
+      animation: fadeIn 0.6s ease both;
+      animation-delay: 0.55s;
     }
 
     .results-actions {
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: 1.25rem;
+      animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-delay: 0.6s;
     }
 
     .actions-primary {
@@ -340,8 +406,19 @@ function injectResultsStyles(): void {
 
     .actions-share {
       display: flex;
-      gap: 0.75rem;
+      gap: 0.625rem;
       flex-wrap: wrap;
+    }
+
+    .actions-share .btn-secondary {
+      font-size: 0.875rem;
+      padding: 0.625rem 1.25rem;
+      background: transparent;
+      border-color: var(--border);
+    }
+
+    .actions-share .btn-secondary:hover {
+      background: var(--bg-card);
     }
 
     .results-error {

@@ -8,13 +8,14 @@
 - **Repo**: github.com/gwanryo/spectrumsense
 - **배포**: GitHub Pages (Actions) — `main` push 시 자동 배포
 - **의존성**: 없음 (zero runtime dependencies, devDependencies만 존재)
+- **외부 리소스**: Google Fonts (Instrument Serif, JetBrains Mono, Outfit) — `index.html`에서 로드
 
 ## Architecture
 
 ### Tech Stack
 - TypeScript (strict), Vite, Vitest
 - No frameworks — 순수 DOM + Canvas API
-- Hash-based routing (`#/landing`, `#/test`, `#/results`)
+- Hash-based routing (`#/`, `#/test`, `#/results`)
 
 ### Source Structure
 ```
@@ -37,9 +38,9 @@ src/
 │   └── results.ts    # 결과 페이지
 ├── i18n/
 │   ├── index.ts      # i18n 초기화, t() 함수
-│   ├── en.json       # 영어 (55개 키)
-│   ├── ko.json       # 한국어 (55개 키)
-│   └── ja.json       # 일본어 (55개 키)
+│   ├── en.json       # 영어 (47개 키)
+│   ├── ko.json       # 한국어 (47개 키)
+│   └── ja.json       # 일본어 (47개 키)
 └── styles/
     └── main.css      # CSS 커스텀 프로퍼티, 전역 스타일
 ```
@@ -101,7 +102,9 @@ tests/
 ```bash
 npm run dev        # 개발 서버 (localhost:5173)
 npm test           # vitest run (94 tests)
+npm run test:watch # vitest watch mode
 npm run build      # tsc && vite build
+npm run preview    # 빌드 결과물 프리뷰 서버
 npx tsc --noEmit   # 타입 체크만
 ```
 
@@ -130,10 +133,10 @@ npx tsc --noEmit   # 타입 체크만
 ## OG Image
 - `public/og-image.png` — 1200×630 PNG, 758KB
 - 생성 스크립트: `scripts/og-image.html` (Playwright로 스크린샷)
-- 생성 도구: `scripts/generate-og-image.mjs`
 - 빌드 시 자동 포함 (`dist/og-image.png`)
 
 ## Deployment
-- GitHub Actions: `.github/workflows/` 에 배포 워크플로우
+- GitHub Actions: `.github/workflows/deploy.yml`
 - `main` 브랜치 push → 자동 빌드 + GitHub Pages 배포
+- CI Node 버전: 22
 - 도메인: `rwe.kr/spectrumsense/` (커스텀 도메인, base path 유지)

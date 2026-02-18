@@ -7,14 +7,14 @@ const CARD_HEIGHT = 630
 
 // Dark theme colors (matching CSS variables)
 const COLORS = {
-  bgPrimary: '#0a0a0f',
-  bgSecondary: '#14141f',
-  bgCard: '#1a1a2e',
-  textPrimary: '#e8e8f0',
-  textSecondary: '#9090a8',
-  textMuted: '#606078',
-  accent: '#6c5ce7',
-  border: '#2a2a3e',
+  bgPrimary: '#06060c',
+  bgSecondary: '#0e0e18',
+  bgCard: '#121220',
+  textPrimary: '#e8e6f0',
+  textSecondary: '#8e8da6',
+  textMuted: '#55546e',
+  accent: '#2dd4bf',
+  border: 'rgba(255, 255, 255, 0.06)',
 }
 
 /**
@@ -57,7 +57,7 @@ function drawBackground(ctx: CanvasRenderingContext2D): void {
 
   // Subtle gradient overlay
   const gradient = ctx.createLinearGradient(0, 0, CARD_WIDTH, CARD_HEIGHT)
-  gradient.addColorStop(0, 'rgba(108, 92, 231, 0.05)')
+  gradient.addColorStop(0, 'rgba(45, 212, 191, 0.05)')
   gradient.addColorStop(1, 'rgba(0, 0, 0, 0)')
   ctx.fillStyle = gradient
   ctx.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT)
@@ -202,7 +202,7 @@ function drawBoundaryStats(
     // Deviation
     const diff = Math.round(dev.difference)
     const diffStr = diff === 0 ? '\u00B10\u00B0' : diff > 0 ? `+${diff}\u00B0` : `${diff}\u00B0`
-    const diffColor = Math.abs(diff) <= 5 ? '#00b894' : Math.abs(diff) <= 15 ? '#fdcb6e' : '#e17055'
+    const diffColor = Math.abs(diff) <= 5 ? '#34d399' : Math.abs(diff) <= 15 ? '#fbbf24' : '#f87171'
     ctx.fillStyle = diffColor
     ctx.font = '18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
     ctx.fillText(diffStr, x + 70, y + 28)
