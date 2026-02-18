@@ -28,6 +28,12 @@ export function renderTest(
 ): void {
   injectTestStyles()
   document.body.style.overflow = 'hidden'
+
+  if (mode === 'refine') {
+    startRealTest(container, mode, previousResults)
+    return
+  }
+
   showEnvironmentCheck(container, () => {
     runWarmup(container, 0, () => {
       startRealTest(container, mode, previousResults)
@@ -182,7 +188,7 @@ function startRealTest(
           <p class="test-confirmation-prompt">${t('test.refine_prompt')}</p>
           <div class="test-confirmation-actions">
             <button class="test-confirmation-btn test-confirmation-btn-primary" id="btn-see-results">${t('test.see_results')}</button>
-            <button class="test-confirmation-btn test-confirmation-btn-secondary" id="btn-refine">${t('results.refine')}</button>
+            ${results.mode !== 'refine' ? `<button class="test-confirmation-btn test-confirmation-btn-secondary" id="btn-refine">${t('results.refine')}</button>` : ''}
           </div>
         </div>
       </div>

@@ -7,14 +7,14 @@ const CARD_HEIGHT = 630
 
 // Dark theme colors (matching CSS variables)
 const COLORS = {
-  bgPrimary: '#06060c',
+  bgPrimary: '#10101c',
   bgSecondary: '#0e0e18',
   bgCard: '#121220',
   textPrimary: '#e8e6f0',
   textSecondary: '#8e8da6',
   textMuted: '#55546e',
   accent: '#2dd4bf',
-  border: 'rgba(255, 255, 255, 0.06)',
+  border: 'rgba(255, 255, 255, 0.10)',
 }
 
 /**
@@ -51,21 +51,31 @@ export function generateResultCard(
 }
 
 function drawBackground(ctx: CanvasRenderingContext2D): void {
-  // Main background
   ctx.fillStyle = COLORS.bgPrimary
   ctx.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT)
 
-  // Subtle gradient overlay
   const gradient = ctx.createLinearGradient(0, 0, CARD_WIDTH, CARD_HEIGHT)
-  gradient.addColorStop(0, 'rgba(45, 212, 191, 0.05)')
-  gradient.addColorStop(1, 'rgba(0, 0, 0, 0)')
+  gradient.addColorStop(0, 'rgba(45, 212, 191, 0.07)')
+  gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0)')
+  gradient.addColorStop(1, 'rgba(45, 212, 191, 0.03)')
   ctx.fillStyle = gradient
   ctx.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT)
 
-  // Border
+  const radius = 16
+  ctx.beginPath()
+  ctx.moveTo(radius, 0)
+  ctx.lineTo(CARD_WIDTH - radius, 0)
+  ctx.quadraticCurveTo(CARD_WIDTH, 0, CARD_WIDTH, radius)
+  ctx.lineTo(CARD_WIDTH, CARD_HEIGHT - radius)
+  ctx.quadraticCurveTo(CARD_WIDTH, CARD_HEIGHT, CARD_WIDTH - radius, CARD_HEIGHT)
+  ctx.lineTo(radius, CARD_HEIGHT)
+  ctx.quadraticCurveTo(0, CARD_HEIGHT, 0, CARD_HEIGHT - radius)
+  ctx.lineTo(0, radius)
+  ctx.quadraticCurveTo(0, 0, radius, 0)
+  ctx.closePath()
   ctx.strokeStyle = COLORS.border
   ctx.lineWidth = 2
-  ctx.strokeRect(1, 1, CARD_WIDTH - 2, CARD_HEIGHT - 2)
+  ctx.stroke()
 }
 
 function drawHeader(ctx: CanvasRenderingContext2D): void {
@@ -144,15 +154,15 @@ function drawMiniSpectrumBar(
     ctx.fill()
   }
 
-  // Draw standard boundary markers (dashed)
+  // Draw standard boundary markers (dashed, teal)
   for (const boundary of BOUNDARIES) {
     const x = barX + (boundary.standardHue / 360) * barW
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'
-    ctx.lineWidth = 1.5
+    ctx.strokeStyle = 'rgba(45, 212, 191, 0.7)'
+    ctx.lineWidth = 2
     ctx.setLineDash([4, 4])
     ctx.beginPath()
     ctx.moveTo(x, barY)
-    ctx.lineTo(x, barY + barH)
+    ctx.lineTo(x, barY + barH + 10)
     ctx.stroke()
   }
   ctx.setLineDash([])
@@ -194,18 +204,20 @@ function drawBoundaryStats(
     ctx.textBaseline = 'top'
     ctx.fillText(`${fromName} \u2194 ${toName}`, x, y)
 
-    // User value
     ctx.fillStyle = COLORS.textPrimary
     ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
     ctx.fillText(`${Math.round(dev.userHue)}\u00B0`, x, y + 22)
 
-    // Deviation
+    ctx.fillStyle = COLORS.textMuted
+    ctx.font = '15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    ctx.fillText(`/ ${dev.standardHue}\u00B0`, x + 70, y + 30)
+
     const diff = Math.round(dev.difference)
     const diffStr = diff === 0 ? '\u00B10\u00B0' : diff > 0 ? `+${diff}\u00B0` : `${diff}\u00B0`
     const diffColor = Math.abs(diff) <= 5 ? '#34d399' : Math.abs(diff) <= 15 ? '#fbbf24' : '#f87171'
     ctx.fillStyle = diffColor
-    ctx.font = '18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-    ctx.fillText(diffStr, x + 70, y + 28)
+    ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    ctx.fillText(diffStr, x + 120, y + 28)
   })
 }
 

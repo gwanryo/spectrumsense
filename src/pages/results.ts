@@ -51,20 +51,10 @@ export function renderResults(container: HTMLElement): void {
            <!-- Disclaimer -->
            <p class="results-disclaimer">${t('results.disclaimer')}</p>
 
-           <!-- References Footer -->
-           <footer class="results-references">
-             <span class="results-references-label">${t('results.citation')}</span>
-             <div class="results-references-links">
-               <a href="https://blog.xkcd.com/2010/05/03/color-survey-results/" target="_blank" rel="noopener noreferrer">XKCD Color Survey</a>
-               <a href="https://en.wikipedia.org/wiki/Munsell_color_system" target="_blank" rel="noopener noreferrer">Munsell Color System</a>
-               <a href="https://en.wikipedia.org/wiki/CIE_1931_color_space" target="_blank" rel="noopener noreferrer">CIE 1931</a>
-             </div>
-           </footer>
-
            <!-- Action Buttons -->
           <section class="results-actions">
             <div class="actions-primary">
-              <button class="btn-primary" id="btn-refine">${t('results.refine')}</button>
+              ${result.mode !== 'refine' ? `<button class="btn-primary" id="btn-refine">${t('results.refine')}</button>` : ''}
               <button class="btn-secondary" id="btn-retake">${t('results.retake')}</button>
             </div>
 
@@ -78,6 +68,16 @@ export function renderResults(container: HTMLElement): void {
               <button class="btn-secondary" id="btn-download">${t('results.download')}</button>
             </div>
           </section>
+
+           <!-- References Footer -->
+           <footer class="results-references">
+             <span class="results-references-label">${t('results.citation')}</span>
+             <div class="results-references-links">
+               <a href="https://blog.xkcd.com/2010/05/03/color-survey-results/" target="_blank" rel="noopener noreferrer">XKCD Color Survey</a>
+               <a href="https://en.wikipedia.org/wiki/Munsell_color_system" target="_blank" rel="noopener noreferrer">Munsell Color System</a>
+               <a href="https://en.wikipedia.org/wiki/CIE_1931_color_space" target="_blank" rel="noopener noreferrer">CIE 1931</a>
+             </div>
+           </footer>
 
         </div>
       </main>
@@ -325,8 +325,9 @@ function injectResultsStyles(): void {
     }
 
     .deviation-hue--muted {
-      color: var(--text-secondary);
+      color: var(--text-primary);
       font-weight: 400;
+      opacity: 0.55;
     }
 
     .deviation-diff-badge {
