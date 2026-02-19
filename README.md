@@ -8,7 +8,7 @@ Interactive color-boundary testing for human perception.
 [![Live Demo](https://img.shields.io/badge/Demo-rwe.kr/spectrumsense-0ea5e9)](https://rwe.kr/spectrumsense/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-SpectrumSense is a framework-free TypeScript web app that measures where users perceive boundaries between adjacent colors. It uses binary search per boundary to estimate each transition point, then compares results against standard reference values.
+SpectrumSense is a framework-free TypeScript web app that measures where users perceive boundaries between adjacent colors. It uses binary search per boundary to estimate each transition point, then compares results against reference color positions and boundary values.
 
 ## Live Demo
 
@@ -17,18 +17,21 @@ SpectrumSense is a framework-free TypeScript web app that measures where users p
 ## Features
 
 - Binary-search-driven boundary estimation across 7 color transitions
-- Reliable test flow with warm-up, interstitial timing, and catch trials
+- Reliable test flow with environment check, warm-up, interstitial timing, and catch trials
+- Optional nickname capture (`sessionStorage`) shown on results and exported result cards
 - Refine mode for focused re-testing around prior boundary values
-- Result analysis: deviation metrics, color-region widths, and share card generation
+- Result analysis: mean absolute deviation, largest shift, color-region widths, and share card generation
+- Spectrum visualization with user boundary lines and reference color markers
 - Compact URL state encoding for shareable result snapshots
 - Built-in i18n with English, Korean, and Japanese locales
 
 ## How It Works
 
-1. The app asks which side of an adjacent color pair a shown hue belongs to.
-2. Responses update a binary search interval for that boundary.
-3. After all boundaries converge, the app computes regional widths and deviations.
-4. Users can run a shorter refine pass around previous answers.
+1. In normal mode, users first complete an environment checklist (with optional nickname) and 2 warm-up questions.
+2. The app asks which side of an adjacent color pair a shown hue belongs to.
+3. Responses update a binary search interval for that boundary.
+4. After all boundaries converge, the app computes regional widths and deviation metrics.
+5. Users can run a shorter refine pass around previous answers from the completion screen.
 
 Default question counts:
 
@@ -38,16 +41,26 @@ Default question counts:
 ## Color Model
 
 - Colors: Red, Orange, Yellow, Green, Blue, Violet, Pink
-- Boundary order (degrees):
-  - R->O `18`
-  - O->Y `48`
-  - Y->G `78`
-  - G->B `163`
-  - B->V `258`
-  - V->P `300`
-  - P->R `345` (search wraps with upper bound `390`)
+- Reference color anchors (`STANDARD_COLORS`, degrees):
+  - Red `0`, Orange `39`, Yellow `60`, Green `120`, Blue `240`, Violet `300`, Pink `350`
+- Boundary order (`BOUNDARIES.standardHue`, degrees):
+  - R->O `20`
+  - O->Y `50`
+  - Y->G `90`
+  - G->B `180`
+  - B->V `270`
+  - V->P `325`
+  - P->R `355` (search wraps with upper bound `390`)
+- Search ranges (`searchRange`): `[0,40]`, `[30,70]`, `[55,120]`, `[120,230]`, `[220,310]`, `[280,350]`, `[330,390]`
 
-Reference values are informed by the XKCD color survey (`N=222,500`), Munsell, and CIE-aligned ranges used in this project.
+Reference alignment uses the project’s selected sources: HTML Color Codes, XKCD color survey (`N=222,500`), Munsell, and CIE materials.
+
+## Results Output
+
+- Header can display the saved nickname from the test setup screen.
+- Spectrum bar shows user boundaries in-bar and reference color positions as bottom `▲` markers.
+- Summary stats highlight average deviation and the single largest shifted color.
+- Per-color cards compare reference hue vs measured hue and show signed difference badges.
 
 ## Tech Stack
 

@@ -8,7 +8,7 @@
 - Repo: github.com/gwanryo/spectrumsense
 - Deploy: GitHub Pages (`main` push 시 Actions 자동 배포)
 - Runtime deps: 없음 (devDependencies only)
-- External resources: Google Fonts (Instrument Serif, JetBrains Mono, Noto Sans KR/JP, Outfit)
+- External resources: Google Fonts (Instrument Serif, JetBrains Mono, Noto Sans KR/JP, Outfit), HTML Color Codes (reference)
 
 ## Stack & Architecture
 
@@ -61,7 +61,9 @@ src/
 ### Color model (7 colors)
 
 - 색상: Red, Orange, Yellow, Green, Blue, Violet, Pink
-- 경계(7개): R→O 18°, O→Y 48°, Y→G 78°, G→B 163°, B→V 258°, V→P 300°, P→R 345°
+- 기준 색상(`STANDARD_COLORS`): R 0°, O 39°, Y 60°, G 120°, B 240°, V 300°, P 350°
+- 경계(7개, `BOUNDARIES.standardHue`): R→O 20°, O→Y 50°, Y→G 90°, G→B 180°, B→V 270°, V→P 325°, P→R 355°
+- 탐색 범위(`searchRange`): [0,40], [30,70], [55,120], [120,230], [220,310], [280,350], [330,390]
 - P→R 탐색 상한은 `390`으로 래핑 처리
 - `binary-search.ts`, `state-machine.ts`는 `BOUNDARIES.length` 기반 동적 로직
 
@@ -73,8 +75,9 @@ src/
 - 최소 응답 시간 300ms
 - 라운드 종료 후 캐치 트라이얼 1회
 - 워밍업 2문항 (결과 미반영)
-- 흐름: 환경 체크 → 워밍업 → 본 테스트
+- 흐름: 환경 체크(닉네임 입력 포함) → 워밍업 → 본 테스트
 - Refine 모드: 환경 체크/워밍업 스킵
+- Refine 버튼은 테스트 완료 화면에서 normal 모드 결과일 때만 표시
 
 ### URL state format (critical)
 
@@ -89,8 +92,9 @@ src/
 - 무지개 그라데이션은 스펙트럼 영역에만 사용
 - CJK 폴백: `--font-sans`, `--font-mono`에 Noto Sans KR/JP 유지
 - 페이지별 스타일은 `injectTestStyles()`, `injectResultsStyles()`에서 동적 주입
-- 결과 액션 행(`.actions-primary`)에서 Refine/Retake 반경은 모두 `var(--radius-lg)`로 통일
-- Refine 버튼은 normal 결과에서만 표시 (`result.mode !== 'refine'`)
+- 결과 액션 행은 `.actions-row` 사용 (Retake/Copy/WebShare/Download)
+- 결과 헤더는 `sessionStorage['spectrumsense-nickname']`가 있으면 닉네임 pill 표시
+- 스펙트럼 레전드는 상단(user boundaries) + 하단(reference color positions, ▲ marker) 2행 구조 유지
 
 ## Critical Invariants (Do Not Break)
 
@@ -100,15 +104,17 @@ src/
 4. `vite.config.ts` base는 `/spectrumsense/` 고정
 5. runtime dependencies 추가 금지
 6. `NORMAL_STEPS=6`, `REFINE_STEPS=3` 유지
+7. 닉네임 저장 키는 `spectrumsense-nickname` 유지 (sessionStorage)
 
 ## Known Pitfalls
 
 - `color.ts/getColorName()`은 7개 영역 하드 분기라 경계 변경 시 필수 수정
 - `url-state.ts`는 바이트 오프셋 하드코딩 (14/15/16)
 - `result-card.ts` 색상명은 i18n이 아니라 내부 하드코딩
-- `drawColorLabels()`는 이전 경계 참조 인덱스 `(i + N - 1) % N`이 핵심
+- `computeRegionCenter()`는 단순 경계 midpoint가 아니라 기준 색상 비율 기반 보정값을 사용
 - `result.ts/getColorRegions()`에서 모듈러는 항상 `BOUNDARIES.length`
-- `spectrum-bar.ts`와 `result-card.ts`의 standard 마커(teal dashed) 시각 언어는 함께 유지
+- `results.ts`/`result-card.ts`의 사용자 색상 스와치는 `getColorRegions()` + `computeRegionCenter()` 조합으로 계산
+- `spectrum-bar.ts`와 `result-card.ts`의 reference marker(하단 ▲ + 라벨) 시각 언어는 함께 유지
 - i18n 키 중 `landing.*` 일부는 실제로 `test.ts` 환경 체크에서 사용됨
 
 ## Command Cheat Sheet
