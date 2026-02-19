@@ -5,7 +5,7 @@ export type ColorName = 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'violet
 export interface Boundary {
   from: ColorName;
   to: ColorName;
-  standardHue: number;  // typical boundary in HSL degrees
+  standardHue: number;  // reference boundary in HSL degrees
   searchRange: { low: number; high: number };  // binary search range
 }
 
@@ -70,7 +70,7 @@ export interface TestResult {
 }
 
 export interface Deviation {
-  boundary: Boundary;
+  color: ColorName;
   userHue: number;
   standardHue: number;
   difference: number;  // signed degrees (positive = shifted clockwise)
@@ -86,7 +86,7 @@ export interface ColorRegion {
 export interface ResultSummary {
   deviations: Deviation[];
   meanAbsoluteDeviation: number;
-  mostShiftedBoundary: Deviation;
+  mostShifted: Deviation;
   colorRegions: ColorRegion[];
 }
 

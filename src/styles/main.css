@@ -348,9 +348,9 @@ button:disabled {
 /* ── Toast Notification ── */
 .toast {
   position: fixed;
-  bottom: 2rem;
+  top: 1.5rem;
   left: 50%;
-  transform: translateX(-50%) translateY(100px);
+  transform: translateX(-50%) translateY(-100px);
   background: var(--bg-elevated);
   border: 1px solid var(--border-accent);
   border-radius: var(--radius-sm);

@@ -45,15 +45,38 @@ function showEnvironmentCheck(
   container: HTMLElement,
   onReady: () => void
 ): void {
+  const savedNickname = sessionStorage.getItem('spectrumsense-nickname') ?? ''
+
   container.innerHTML = `
     <div class="test-page-wrapper">
       <div class="test-env-check">
+        <button class="test-back-btn" id="btn-back" aria-label="${t('test.back')}">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M12 4l-6 6 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          ${t('test.back')}
+        </button>
         <h2 class="test-env-title">${t('test.env_title')}</h2>
         <ul class="test-env-list">
           <li>${t('test.env_brightness')}</li>
           <li>${t('test.env_nightmode')}</li>
           <li>${t('test.env_lighting')}</li>
         </ul>
+
+        <div class="test-env-divider"></div>
+
+        <div class="test-env-nickname">
+          <label class="test-env-nickname-label" for="nickname-input">${t('test.nickname_label')}</label>
+          <input
+            type="text"
+            id="nickname-input"
+            class="test-env-nickname-input"
+            placeholder="${t('test.nickname_placeholder')}"
+            value="${savedNickname.replace(/"/g, '&quot;')}"
+            maxlength="20"
+            autocomplete="off"
+          />
+        </div>
 
         <div class="test-env-divider"></div>
 
@@ -64,21 +87,11 @@ function showEnvironmentCheck(
             <li>${t('landing.how_step2')}</li>
             <li>${t('landing.how_step3')}</li>
           </ol>
-          <p class="test-env-how-note">${t('test.how_note')}</p>
         </div>
 
         <div class="test-env-divider"></div>
 
-        <div class="test-env-details">
-          <div class="test-env-detail">
-            <h3 class="test-env-detail-title">${t('landing.boundaries_title')}</h3>
-            <p class="test-env-detail-text">${t('landing.boundaries_desc')}</p>
-          </div>
-          <div class="test-env-detail">
-            <h3 class="test-env-detail-title">${t('landing.reliability_title')}</h3>
-            <p class="test-env-detail-text">${t('landing.reliability_desc')}</p>
-          </div>
-        </div>
+        <p class="test-env-disclaimer">${t('test.disclaimer')}</p>
 
         <button class="test-confirmation-btn test-confirmation-btn-primary" id="btn-env-ready">
           ${t('test.env_ready')}
@@ -86,8 +99,25 @@ function showEnvironmentCheck(
       </div>
     </div>
   `
-  container.querySelector<HTMLButtonElement>('#btn-env-ready')!
-    .addEventListener('click', onReady)
+
+  const nicknameInput = container.querySelector<HTMLInputElement>('#nickname-input')!
+  const readyBtn = container.querySelector<HTMLButtonElement>('#btn-env-ready')!
+  const backBtn = container.querySelector<HTMLButtonElement>('#btn-back')!
+
+  backBtn.addEventListener('click', () => {
+    document.body.style.overflow = ''
+    window.location.hash = '#/landing'
+  })
+
+  readyBtn.addEventListener('click', () => {
+    const nickname = nicknameInput.value.trim()
+    if (nickname) {
+      sessionStorage.setItem('spectrumsense-nickname', nickname)
+    } else {
+      sessionStorage.removeItem('spectrumsense-nickname')
+    }
+    onReady()
+  })
 }
 
 function runWarmup(
@@ -359,18 +389,45 @@ function injectTestStyles(): void {
       flex: 1;
     }
 
+    .test-back-btn {
+      position: absolute;
+      top: 1.25rem;
+      left: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.5rem 0.875rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-sm, 8px);
+      color: rgba(255, 255, 255, 0.4);
+      font-family: var(--font-sans, 'Outfit', sans-serif);
+      font-size: 0.8125rem;
+      font-weight: 400;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      z-index: 10;
+    }
+
+    .test-back-btn:hover {
+      color: rgba(255, 255, 255, 0.7);
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
     .test-env-check {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: safe center;
       gap: 2rem;
-      padding: 2rem;
+      padding: 3.5rem 2rem 2rem;
       text-align: center;
       width: 100%;
       height: 100%;
       overflow-y: auto;
       animation: fadeIn 0.5s ease both;
+      position: relative;
     }
 
     .test-env-title {
@@ -469,6 +526,63 @@ function injectTestStyles(): void {
       font-weight: 300;
       margin: 0;
       font-style: italic;
+    }
+
+    .test-env-nickname {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      max-width: 440px;
+      width: 100%;
+    }
+
+    .test-env-nickname-label {
+      font-family: var(--font-sans, 'Outfit', sans-serif);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.35);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .test-env-nickname-input {
+      width: 100%;
+      max-width: 280px;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-md, 12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.04);
+      color: #ffffff;
+      font-family: var(--font-sans, 'Outfit', sans-serif);
+      font-size: 1rem;
+      font-weight: 400;
+      text-align: center;
+      outline: none;
+      transition: all 0.15s ease;
+    }
+
+    .test-env-nickname-input::placeholder {
+      color: rgba(255, 255, 255, 0.2);
+    }
+
+    .test-env-nickname-input:focus {
+      border-color: rgba(45, 212, 191, 0.4);
+      background: rgba(255, 255, 255, 0.06);
+      box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.08);
+    }
+
+    .test-env-disclaimer {
+      font-size: 0.8125rem;
+      color: rgba(255, 255, 255, 0.3);
+      line-height: 1.7;
+      max-width: 440px;
+      text-align: center;
+      font-weight: 300;
+      padding: 0.875rem 1.25rem;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: var(--radius-sm, 8px);
+      border: 1px solid rgba(255, 255, 255, 0.04);
     }
 
     .test-env-details {

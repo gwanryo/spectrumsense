@@ -1,15 +1,41 @@
 import type { Boundary, ColorName } from './types'
 
+// ── Standard Color Hues (single source of truth) ──
+// Reference: https://html-color.codes/
+export const STANDARD_COLORS: Record<ColorName, number> = {
+  red: 0, orange: 39, yellow: 60, green: 120, blue: 240, violet: 300, pink: 350,
+}
+
+export const COLOR_ORDER: ColorName[] = ['red', 'orange', 'yellow', 'green', 'blue', 'violet', 'pink']
+
+// Display-quality HSL per color (S/L tuned for visual appearance)
+const COLOR_DISPLAY: Record<ColorName, { s: number; l: number }> = {
+  red:    { s: 100, l: 50 },
+  orange: { s: 100, l: 55 },
+  yellow: { s: 100, l: 50 },
+  green:  { s: 70,  l: 45 },
+  blue:   { s: 100, l: 55 },
+  violet: { s: 80,  l: 60 },
+  pink:   { s: 80,  l: 55 },
+}
+
+export function getColorHsl(color: ColorName): string {
+  const hue = STANDARD_COLORS[color]
+  const { s, l } = COLOR_DISPLAY[color]
+  return `hsl(${hue}, ${s}%, ${l}%)`
+}
+
 // ── Standard Color Boundaries ──
-// Based on XKCD color survey (N=222,500), Munsell, and CIE research
+// standardHue = midpoint of adjacent STANDARD_COLORS
+// searchRange covers plausible human variation around each boundary
 export const BOUNDARIES: Boundary[] = [
-  { from: 'red',    to: 'orange', standardHue: 18,  searchRange: { low: 0,   high: 40  } },
-  { from: 'orange', to: 'yellow', standardHue: 48,  searchRange: { low: 30,  high: 65  } },
-  { from: 'yellow', to: 'green',  standardHue: 78,  searchRange: { low: 55,  high: 105 } },
-  { from: 'green',  to: 'blue',   standardHue: 163, searchRange: { low: 120, high: 210 } },
-  { from: 'blue',   to: 'violet', standardHue: 258, searchRange: { low: 220, high: 290 } },
-  { from: 'violet', to: 'pink',   standardHue: 300, searchRange: { low: 280, high: 325 } },
-  { from: 'pink',   to: 'red',    standardHue: 345, searchRange: { low: 320, high: 390 } },
+  { from: 'red',    to: 'orange', standardHue: 20,  searchRange: { low: 0,   high: 40  } },
+  { from: 'orange', to: 'yellow', standardHue: 50,  searchRange: { low: 30,  high: 70  } },
+  { from: 'yellow', to: 'green',  standardHue: 90,  searchRange: { low: 55,  high: 120 } },
+  { from: 'green',  to: 'blue',   standardHue: 180, searchRange: { low: 120, high: 230 } },
+  { from: 'blue',   to: 'violet', standardHue: 270, searchRange: { low: 220, high: 310 } },
+  { from: 'violet', to: 'pink',   standardHue: 325, searchRange: { low: 280, high: 350 } },
+  { from: 'pink',   to: 'red',    standardHue: 355, searchRange: { low: 330, high: 390 } },
   // Note: 390 = 360 + 30, representing wrap-around to 30° past 0°
 ]
 
@@ -76,4 +102,35 @@ export function getColorName(hue: number, boundaries: number[]): ColorName {
   if (h >= gb && h < bv) return 'blue'
   if (h >= bv && h < vp) return 'violet'
   return 'pink'
+}
+
+/** Clockwise angular span from hue a to hue b, in [0, 360). */
+export function clockwiseSpan(a: number, b: number): number {
+  const diff = normalizeHue(b) - normalizeHue(a)
+  return diff < 0 ? diff + 360 : diff
+}
+
+/**
+ * Region center via standard-color proportional offset.
+ * NOT the boundary midpoint — boundaries are asymmetric around
+ * each standard color (e.g. Green=120° but midpoint(90°,180°)=135°).
+ */
+export function computeRegionCenter(
+  regionIndex: number,
+  userStart: number,
+  userEnd: number,
+): number {
+  const n = BOUNDARIES.length
+  const stdStart = BOUNDARIES[regionIndex].standardHue
+  const stdEnd = BOUNDARIES[(regionIndex + 1) % n].standardHue
+  const colorName = BOUNDARIES[regionIndex].to
+  const stdCenter = STANDARD_COLORS[colorName]
+
+  const stdSpan = clockwiseSpan(stdStart, stdEnd)
+  const ratio = stdSpan > 0
+    ? clockwiseSpan(stdStart, stdCenter) / stdSpan
+    : 0.5
+
+  const userSpan = clockwiseSpan(userStart, userEnd)
+  return normalizeHue(userStart + ratio * userSpan)
 }

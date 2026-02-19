@@ -103,8 +103,8 @@ describe('isComplete', () => {
 describe('Normal boundary convergence (Orange->Yellow)', () => {
   it('all-first choices converges tightly toward high bound', () => {
     const { result } = runSearch(1, Array(6).fill(true))
-    expect(result).toBeGreaterThanOrEqual(64)
-    expect(result).toBeLessThanOrEqual(65)
+    expect(result).toBeGreaterThanOrEqual(69)
+    expect(result).toBeLessThanOrEqual(70)
   })
 
   it('all-second choices converges tightly toward low bound', () => {
@@ -116,8 +116,8 @@ describe('Normal boundary convergence (Orange->Yellow)', () => {
   it('alternating choices converges to stable mid-range', () => {
     const choices = [true, false, true, false, true, false]
     const { result } = runSearch(1, choices)
-    expect(result).toBeGreaterThanOrEqual(53)
-    expect(result).toBeLessThanOrEqual(54)
+    expect(result).toBeGreaterThanOrEqual(56)
+    expect(result).toBeLessThanOrEqual(57)
   })
 
   it('result is deterministic for same choices', () => {
@@ -136,12 +136,12 @@ describe('Normal boundary convergence (Orange->Yellow)', () => {
 })
 
 describe('Violet->Pink boundary convergence (boundary index 5)', () => {
-  it('initial hue is in violet-pink range', () => {
+   it('initial hue is in violet-pink range', () => {
     const boundary = BOUNDARIES[5]
     const state = initBinarySearch(boundary)
     const hue = state.currentHue
     expect(hue).toBeGreaterThanOrEqual(280)
-    expect(hue).toBeLessThanOrEqual(325)
+    expect(hue).toBeLessThanOrEqual(350)
   })
 
   it('all intermediate hues stay in violet-pink range', () => {
@@ -156,7 +156,7 @@ describe('Violet->Pink boundary convergence (boundary index 5)', () => {
       const { hues } = runSearch(5, choices)
       for (const hue of hues) {
         expect(hue).toBeGreaterThanOrEqual(280)
-        expect(hue).toBeLessThanOrEqual(325)
+        expect(hue).toBeLessThanOrEqual(350)
       }
     }
   })
@@ -165,7 +165,7 @@ describe('Violet->Pink boundary convergence (boundary index 5)', () => {
     const choices = [true, false, true, false, true, false]
     const { result } = runSearch(5, choices)
     expect(result).toBeGreaterThanOrEqual(280)
-    expect(result).toBeLessThanOrEqual(325)
+    expect(result).toBeLessThanOrEqual(350)
   })
 })
 

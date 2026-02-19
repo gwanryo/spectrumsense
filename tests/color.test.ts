@@ -106,7 +106,7 @@ describe('BOUNDARIES', () => {
 
   it('has correct standard hues', () => {
     const hues = BOUNDARIES.map(b => b.standardHue)
-    expect(hues).toEqual([18, 48, 78, 163, 258, 300, 345])
+    expect(hues).toEqual([20, 50, 90, 180, 270, 325, 355])
   })
 
   it('has correct color name pairs', () => {
@@ -118,12 +118,12 @@ describe('BOUNDARIES', () => {
   it('Violet→Pink boundary has expected range', () => {
     const vp = BOUNDARIES[5]
     expect(vp.searchRange.low).toBe(280)
-    expect(vp.searchRange.high).toBe(325)
+    expect(vp.searchRange.high).toBe(350)
   })
 
   it('Pink→Red boundary has wrap-around range', () => {
     const pr = BOUNDARIES[6]
-    expect(pr.searchRange.low).toBe(320)
+    expect(pr.searchRange.low).toBe(330)
     expect(pr.searchRange.high).toBe(390)
   })
 
@@ -138,23 +138,23 @@ describe('getColorName with 7 boundaries', () => {
   const boundaries = BOUNDARIES.map(b => b.standardHue)
 
   it('classifies all 7 color regions correctly', () => {
-    expect(getColorName(350, boundaries)).toBe('red')
+    expect(getColorName(358, boundaries)).toBe('red')
     expect(getColorName(10, boundaries)).toBe('red')
     expect(getColorName(30, boundaries)).toBe('orange')
     expect(getColorName(60, boundaries)).toBe('yellow')
     expect(getColorName(120, boundaries)).toBe('green')
     expect(getColorName(200, boundaries)).toBe('blue')
     expect(getColorName(280, boundaries)).toBe('violet')
-    expect(getColorName(320, boundaries)).toBe('pink')
+    expect(getColorName(340, boundaries)).toBe('pink')
   })
 
   it('classifies hues exactly at boundary values as the "to" color', () => {
-    expect(getColorName(18, boundaries)).toBe('orange')
-    expect(getColorName(48, boundaries)).toBe('yellow')
-    expect(getColorName(78, boundaries)).toBe('green')
-    expect(getColorName(163, boundaries)).toBe('blue')
-    expect(getColorName(258, boundaries)).toBe('violet')
-    expect(getColorName(300, boundaries)).toBe('pink')
-    expect(getColorName(345, boundaries)).toBe('red')
+    expect(getColorName(20, boundaries)).toBe('orange')
+    expect(getColorName(50, boundaries)).toBe('yellow')
+    expect(getColorName(90, boundaries)).toBe('green')
+    expect(getColorName(180, boundaries)).toBe('blue')
+    expect(getColorName(270, boundaries)).toBe('violet')
+    expect(getColorName(325, boundaries)).toBe('pink')
+    expect(getColorName(355, boundaries)).toBe('red')
   })
 })

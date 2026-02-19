@@ -1,20 +1,12 @@
-import type { TestResult, ColorName } from '../types'
+import type { TestResult } from '../types'
 import { readResultFromUrl, buildShareUrl } from '../url-state'
-import { computeDeviations } from '../result'
+import { computeDeviations, summarizeResults } from '../result'
+import { getColorHsl, computeRegionCenter } from '../color'
+import { getColorRegions } from '../result'
 import { renderSpectrumBar } from '../canvas/spectrum-bar'
 import { generateResultCard, downloadResultCard } from '../canvas/result-card'
 import { shareWebApi, copyToClipboard, isWebShareSupported } from '../sharing'
 import { t, getCurrentLocale } from '../i18n/index'
-
-const COLOR_HUE_MAP: Record<ColorName, string> = {
-  red: 'hsl(0, 100%, 50%)',
-  orange: 'hsl(30, 100%, 55%)',
-  yellow: 'hsl(55, 100%, 50%)',
-  green: 'hsl(140, 70%, 45%)',
-  blue: 'hsl(220, 100%, 55%)',
-  violet: 'hsl(270, 80%, 60%)',
-  pink: 'hsl(330, 80%, 55%)',
-}
 
 export function renderResults(container: HTMLElement): void {
   const result = readResultFromUrl()
@@ -25,13 +17,26 @@ export function renderResults(container: HTMLElement): void {
   }
 
   const deviations = computeDeviations(result.boundaries)
+  const summary = summarizeResults(deviations)
+
+  const nickname = sessionStorage.getItem('spectrumsense-nickname') ?? ''
+
+  const madValue = Math.round(summary.meanAbsoluteDeviation * 10) / 10
+  const mostShiftedColor = t(`colors.${summary.mostShifted.color}`)
+  const mostShiftedDiff = Math.round(summary.mostShifted.difference)
+  const mostShiftedStr = mostShiftedDiff > 0 ? `+${mostShiftedDiff}°` : `${mostShiftedDiff}°`
 
   container.innerHTML = `
     <div class="results-page">
       <header class="results-header">
         <div class="container">
-          <h1 class="results-title">${t('results.title')}</h1>
-          <p class="results-subtitle">${t('results.subtitle')}</p>
+          <div class="results-heading-row">
+            <div class="results-heading-copy">
+              <h1 class="results-title">${t('results.title')}</h1>
+              <p class="results-subtitle">${t('results.subtitle')}</p>
+            </div>
+            ${nickname ? `<p class="results-nickname">${nickname}</p>` : ''}
+          </div>
         </div>
       </header>
 
@@ -43,8 +48,17 @@ export function renderResults(container: HTMLElement): void {
             <canvas id="spectrum-bar-canvas" class="spectrum-bar-canvas"></canvas>
           </section>
 
-           <!-- Disclaimer -->
-           <p class="results-disclaimer">${t('results.disclaimer')}</p>
+          <!-- Summary Stats -->
+          <section class="results-summary">
+            <div class="summary-stat">
+              <span class="summary-stat-value">${madValue}°</span>
+              <span class="summary-stat-label">${t('results.summary_avg')}</span>
+            </div>
+            <div class="summary-stat">
+              <span class="summary-stat-value">${mostShiftedColor} ${mostShiftedStr}</span>
+              <span class="summary-stat-label">${t('results.summary_most_shifted')}</span>
+            </div>
+          </section>
 
           <!-- Deviation Table -->
           <section class="results-section">
@@ -53,18 +67,10 @@ export function renderResults(container: HTMLElement): void {
 
            <!-- Action Buttons -->
           <section class="results-actions">
-            <div class="actions-primary">
-              ${result.mode !== 'refine' ? `<button class="btn-primary" id="btn-refine">${t('results.refine')}</button>` : ''}
+            <div class="actions-row">
               <button class="btn-secondary" id="btn-retake">${t('results.retake')}</button>
-            </div>
-
-            <div class="actions-share">
-              <button class="btn-secondary" id="btn-copy">
-                ${t('results.copy_link')}
-              </button>
-
+              <button class="btn-secondary" id="btn-copy">${t('results.copy_link')}</button>
               ${isWebShareSupported() ? `<button class="btn-secondary" id="btn-webshare">${t('results.web_share')}</button>` : ''}
-
               <button class="btn-secondary" id="btn-download">${t('results.download')}</button>
             </div>
           </section>
@@ -76,6 +82,7 @@ export function renderResults(container: HTMLElement): void {
                <a href="https://blog.xkcd.com/2010/05/03/color-survey-results/" target="_blank" rel="noopener noreferrer">XKCD Color Survey</a>
                <a href="https://en.wikipedia.org/wiki/Munsell_color_system" target="_blank" rel="noopener noreferrer">Munsell Color System</a>
                <a href="https://en.wikipedia.org/wiki/CIE_1931_color_space" target="_blank" rel="noopener noreferrer">CIE 1931</a>
+               <a href="https://html-color.codes/" target="_blank" rel="noopener noreferrer">HTML Color Codes</a>
              </div>
            </footer>
 
@@ -97,67 +104,76 @@ export function renderResults(container: HTMLElement): void {
         t('colors.red'), t('colors.orange'), t('colors.yellow'),
         t('colors.green'), t('colors.blue'), t('colors.violet'), t('colors.pink'),
       ],
+      labelUser: t('results.legend_user'),
+      labelReference: t('results.legend_reference'),
     })
   })
   ro.observe(canvas)
 
-  renderDeviationGrid(container, deviations)
+  renderDeviationGrid(container, deviations, result.boundaries)
   wireButtons(container, result)
 }
 
 function renderDeviationGrid(
   container: HTMLElement,
   deviations: ReturnType<typeof computeDeviations>,
+  userBoundaries: number[],
 ): void {
   const grid = container.querySelector<HTMLElement>('#deviation-grid')!
+  const regions = getColorRegions(userBoundaries)
+  const regionByColor = new Map(regions.map((r, i) => [r.name, i]))
 
-  grid.innerHTML = deviations.map((dev, i) => {
+  const cards = deviations.map((dev, i) => {
     const diff = Math.round(dev.difference)
     const absDiff = Math.abs(diff)
     const diffStr = diff === 0 ? '±0°' : diff > 0 ? `+${diff}°` : `${diff}°`
     const diffClass = absDiff <= 5 ? 'diff-small' : absDiff <= 15 ? 'diff-medium' : 'diff-large'
 
-    const fromKey = `colors.${dev.boundary.from}`
-    const toKey = `colors.${dev.boundary.to}`
-    const fromColor = COLOR_HUE_MAP[dev.boundary.from]
-    const toColor = COLOR_HUE_MAP[dev.boundary.to]
+    const colorKey = `colors.${dev.color}`
+    const colorName = t(colorKey)
+    const standardHsl = getColorHsl(dev.color)
+    const userHue = Math.round(dev.userHue)
+
+    const regionIdx = regionByColor.get(dev.color)!
+    const region = regions[regionIdx]
+    const userCenterHue = computeRegionCenter(regionIdx, region.startHue, region.endHue)
+    const userColorHsl = `hsl(${Math.round(userCenterHue)}, 100%, 50%)`
+    const yourColorLabel = t('results.your_color').replace('{color}', colorName)
 
     return `
       <div class="deviation-card card" style="animation-delay: ${i * 0.08}s">
-        <div class="deviation-card-header">
-          <div class="deviation-swatches">
-            <span class="deviation-swatch" style="background: ${fromColor}"></span>
-            <span class="deviation-swatch" style="background: ${toColor}"></span>
+        <div class="deviation-color-compare">
+          <div class="deviation-color-item">
+            <span class="deviation-swatch-lg" style="background: ${standardHsl}"></span>
+            <span class="deviation-color-label">${colorName}</span>
           </div>
-          <div class="deviation-boundary">${t(fromKey)} ↔ ${t(toKey)}</div>
+          <div class="deviation-color-item">
+            <span class="deviation-swatch-lg" style="background: ${userColorHsl}"></span>
+            <span class="deviation-color-label">${yourColorLabel}</span>
+          </div>
         </div>
         <div class="deviation-values">
           <div class="deviation-value">
-            <span class="deviation-label">${t('results.your_value')}</span>
-            <span class="deviation-hue">${Math.round(dev.userHue)}°</span>
-          </div>
-          <div class="deviation-value">
             <span class="deviation-label">${t('results.typical_value')}</span>
             <span class="deviation-hue deviation-hue--muted">${dev.standardHue}°</span>
+          </div>
+          <div class="deviation-value">
+            <span class="deviation-label">${t('results.measured_value')}</span>
+            <span class="deviation-hue">${userHue}°</span>
           </div>
           <div class="deviation-diff-badge ${diffClass}">${diffStr}</div>
         </div>
       </div>
     `
-  }).join('')
+  })
+
+  grid.innerHTML = cards.join('')
 }
 
 function wireButtons(
   container: HTMLElement,
   result: TestResult,
 ): void {
-  container.querySelector('#btn-refine')?.addEventListener('click', () => {
-    const encoded = btoa(JSON.stringify(result))
-    const params = new URLSearchParams()
-    params.set('prev', encoded)
-    window.location.hash = `#/test?${params.toString()}`
-  })
-
   container.querySelector('#btn-retake')?.addEventListener('click', () => {
     window.location.hash = '#/test'
   })
@@ -177,7 +193,8 @@ function wireButtons(
 
   container.querySelector('#btn-download')?.addEventListener('click', () => {
     const locale = getCurrentLocale()
-    const card = generateResultCard(result, locale)
+    const nick = sessionStorage.getItem('spectrumsense-nickname') ?? undefined
+    const card = generateResultCard(result, locale, nick)
     downloadResultCard(card)
   })
 }
@@ -217,6 +234,17 @@ function injectResultsStyles(): void {
       border-bottom: 1px solid var(--border);
     }
 
+    .results-heading-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .results-heading-copy {
+      min-width: 0;
+    }
+
     .results-title {
       margin-bottom: 0.5rem;
       font-family: var(--font-display);
@@ -241,14 +269,75 @@ function injectResultsStyles(): void {
       animation-delay: 0.15s;
     }
 
+    .results-nickname {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      color: var(--accent);
+      font-weight: 600;
+      margin: 0.3rem 0 0;
+      font-family: var(--font-sans);
+      letter-spacing: 0.01em;
+      padding: 0.35rem 1rem;
+      background: var(--accent-dim);
+      border: 1px solid var(--border-accent);
+      border-radius: var(--radius-lg);
+      animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    .results-disclaimer--medical {
+      border-left-color: rgba(251, 191, 36, 0.3);
+    }
+
     .spectrum-bar-canvas {
       width: 100%;
-      height: 140px;
+      height: 150px;
       display: block;
-      border-radius: var(--radius-md);
-      overflow: hidden;
+    }
+
+    @media (max-width: 480px) {
+      .spectrum-bar-canvas {
+        height: 160px;
+      }
+    }
+
+    .results-summary {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+      animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-delay: 0.2s;
+    }
+
+    .summary-stat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 1.25rem 1rem;
+      background: var(--bg-card);
       border: 1px solid var(--border);
-      box-shadow: 0 4px 40px rgba(0, 0, 0, 0.3), 0 0 30px rgba(45, 212, 191, 0.04);
+      border-radius: var(--radius-md);
+    }
+
+    .summary-stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      letter-spacing: -0.02em;
+    }
+
+    .summary-stat-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
     }
 
     .deviation-grid {
@@ -257,15 +346,64 @@ function injectResultsStyles(): void {
       gap: 1rem;
     }
 
+    /* Center the last card when it's alone in its row (e.g. 7 items in 3 cols) */
+    .deviation-card:last-child:nth-child(3n+1) {
+      grid-column: 2;
+    }
+
     @media (max-width: 768px) {
       .deviation-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+      }
+      /* Reset 3-col centering; center for 2-col odd last item */
+      .deviation-card:last-child:nth-child(3n+1) {
+        grid-column: auto;
+      }
+      .deviation-card:last-child:nth-child(2n+1) {
+        grid-column: 1 / -1;
+        max-width: 50%;
+        justify-self: center;
       }
     }
 
     @media (max-width: 480px) {
+      .results-summary {
+        gap: 0.625rem;
+      }
+      .summary-stat {
+        padding: 1rem 0.75rem;
+      }
+      .summary-stat-value {
+        font-size: 1.25rem;
+      }
       .deviation-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.625rem;
+      }
+      .deviation-card {
+        padding: 1rem;
+        gap: 0.625rem;
+      }
+      .deviation-swatch-lg {
+        width: 28px;
+        height: 28px;
+      }
+      .deviation-color-label {
+        font-size: 0.625rem;
+      }
+      .deviation-hue {
+        font-size: 0.875rem;
+      }
+      .deviation-label {
+        font-size: 0.75rem;
+      }
+      .deviation-diff-badge {
+        font-size: 0.75rem;
+        padding: 0.1875rem 0.5rem;
+      }
+      .deviation-card:last-child:nth-child(2n+1) {
+        max-width: 100%;
       }
     }
 
@@ -276,31 +414,35 @@ function injectResultsStyles(): void {
       animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
 
-    .deviation-card-header {
+    .deviation-color-compare {
       display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .deviation-color-item {
+      display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 0.625rem;
+      gap: 0.375rem;
+      flex: 1;
     }
 
-    .deviation-swatches {
-      display: flex;
-      gap: 0.25rem;
-      flex-shrink: 0;
-    }
-
-    .deviation-swatch {
-      width: 12px;
-      height: 12px;
+    .deviation-swatch-lg {
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
-      box-shadow: 0 0 6px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
     }
 
-    .deviation-boundary {
-      font-size: 0.8125rem;
-      font-weight: 600;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+    .deviation-color-label {
+      font-size: 0.6875rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.2;
     }
 
     .deviation-values {
@@ -421,32 +563,14 @@ function injectResultsStyles(): void {
       animation-delay: 0.6s;
     }
 
-    .actions-primary {
+    .actions-row {
       display: flex;
       gap: 0.75rem;
       flex-wrap: wrap;
     }
 
-    .actions-primary .btn-primary,
-    .actions-primary .btn-secondary {
+    .actions-row .btn-secondary {
       border-radius: var(--radius-lg);
-    }
-
-    .actions-share {
-      display: flex;
-      gap: 0.625rem;
-      flex-wrap: wrap;
-    }
-
-    .actions-share .btn-secondary {
-      font-size: 0.875rem;
-      padding: 0.625rem 1.25rem;
-      background: transparent;
-      border-color: var(--border);
-    }
-
-    .actions-share .btn-secondary:hover {
-      background: var(--bg-card);
     }
 
     .results-error {
@@ -467,13 +591,22 @@ function injectResultsStyles(): void {
       .results-header {
         padding: 2rem 0 1.5rem;
       }
-      .actions-primary,
-      .actions-share {
+      .results-heading-row {
         flex-direction: column;
+        align-items: flex-start;
       }
-      .actions-primary .btn-primary,
-      .actions-primary .btn-secondary,
-      .actions-share .btn-secondary {
+      .results-nickname {
+        margin-top: 0.25rem;
+      }
+      .summary-stat-value {
+        font-size: 1.125rem;
+      }
+      .actions-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+      }
+      .actions-row .btn-secondary {
         width: 100%;
         justify-content: center;
       }

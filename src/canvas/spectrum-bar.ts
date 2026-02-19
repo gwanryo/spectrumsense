@@ -1,17 +1,20 @@
-import { BOUNDARIES, normalizeHue, circularMidpoint } from '../color'
+import { BOUNDARIES, normalizeHue, clockwiseSpan, COLOR_ORDER, STANDARD_COLORS } from '../color'
+import type { ColorName } from '../types'
+import { getColorRegions } from '../result'
 
 export interface SpectrumBarOptions {
   colorLabels?: string[]
-  showLabels?: boolean
-  barHeight?: number
+  labelUser?: string
+  labelReference?: string
 }
 
 const DEFAULT_COLOR_LABELS = ['Red', 'Orange', 'Yellow', 'Green', 'Blue', 'Violet', 'Pink']
+const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
 
 /**
- * Render a linear spectrum bar onto a canvas element.
- * Shows user's boundary markers vs standard boundary markers.
- * Applies devicePixelRatio for crisp retina rendering.
+ * Render a single user color-boundary bar with standard-color reference markers below.
+ * - Top: row label + hue gradient bar with user's boundary lines and region labels
+ * - Bottom row: small ▲ arrows at standard color positions with labels
  */
 export function renderSpectrumBar(
   canvas: HTMLCanvasElement,
@@ -20,242 +23,189 @@ export function renderSpectrumBar(
 ): void {
   const {
     colorLabels = DEFAULT_COLOR_LABELS,
-    showLabels = true,
-    barHeight = 40,
+    labelUser = 'Your color boundaries',
+    labelReference = 'Reference color positions',
   } = options
 
   const dpr = window.devicePixelRatio || 1
-  const logicalWidth = canvas.clientWidth || 600
-  const logicalHeight = canvas.clientHeight || 140
+  const W = canvas.clientWidth || 600
+  const H = canvas.clientHeight || 150
 
-  canvas.width = logicalWidth * dpr
-  canvas.height = logicalHeight * dpr
+  canvas.width = W * dpr
+  canvas.height = H * dpr
 
   const ctx = canvas.getContext('2d')!
   ctx.scale(dpr, dpr)
-  ctx.clearRect(0, 0, logicalWidth, logicalHeight)
+  ctx.clearRect(0, 0, W, H)
 
-  const barY = 40
-  const barW = logicalWidth
-  const barH = barHeight
+  // Layout — give more room on narrow screens for staggered labels
+  const isNarrow = W < 500
+  const rowLabelY = 2             // "당신의 색 경계"
+  const barY = 20
+  const belowBarSpace = isNarrow ? 62 : 52 // extra space for staggered labels
+  const barH = H - barY - belowBarSpace
+  const refArrowY = barY + barH + 8  // ▲ arrows below bar
+  const refLabelY = refArrowY + 12   // color name labels
+  const refRowLabelY = refLabelY + (isNarrow ? 26 : 16) // "기준 색 위치"
 
-  drawSpectrumGradient(ctx, 0, barY, barW, barH)
+  // 1. Row label
+  ctx.font = `500 13px ${FONT}`
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'middle'
+  ctx.fillStyle = '#8e8da6'
+  ctx.fillText(labelUser, 2, rowLabelY + 6)
 
-  const standardHues = BOUNDARIES.map(b => b.standardHue)
-  drawBoundaryMarkers(ctx, standardHues, barY, barH, barW, {
-    color: 'rgba(45, 212, 191, 0.7)',
-    lineWidth: 2,
-    dashed: true,
-    markerHeight: 10,
-    position: 'below',
-  })
+  // 2. User bar
+  drawColorBar(ctx, userBoundaries, 0, barY, W, barH, colorLabels)
 
-  drawBoundaryMarkers(ctx, userBoundaries, barY, barH, barW, {
-    color: '#ffffff',
-    lineWidth: 2.5,
-    dashed: false,
-    markerHeight: 12,
-    position: 'above',
-  })
+  // 3. Reference markers below bar (standard color positions)
+  drawReferenceMarkers(ctx, W, refLabelY, refArrowY, colorLabels)
 
-  if (showLabels) {
-    drawColorLabels(ctx, userBoundaries, barY, barH, barW, colorLabels)
-  }
-
-  drawLegend(ctx, logicalWidth, logicalHeight)
+  // 4. Reference row label
+  ctx.font = `500 13px ${FONT}`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'top'
+  ctx.fillStyle = '#8e8da6'
+  ctx.fillText(labelReference, W / 2, refRowLabelY)
 }
 
-function drawSpectrumGradient(
+// ── Reference markers ──
+
+function drawReferenceMarkers(
   ctx: CanvasRenderingContext2D,
+  barW: number,
+  labelY: number,
+  arrowY: number,
+  labels: string[],
+): void {
+  const isNarrow = barW < 500
+  const arrowSize = isNarrow ? 3 : 4
+  const minInset = isNarrow ? 10 : 14
+  const fontSize = isNarrow ? 9 : 11
+
+  for (let i = 0; i < COLOR_ORDER.length; i++) {
+    const color = COLOR_ORDER[i] as ColorName
+    const hue = STANDARD_COLORS[color]
+    const cx = (normalizeHue(hue) / 360) * barW
+
+    // Clamp label position to stay within bounds
+    const clampedX = Math.max(minInset, Math.min(barW - minInset, cx))
+
+    // Stagger labels on narrow screens to avoid overlap
+    const staggerOffset = isNarrow && i % 2 === 1 ? 11 : 0
+
+    // Color name label
+    ctx.font = `500 ${fontSize}px ${FONT}`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'top'
+    ctx.fillStyle = '#6b6a85' // --text-muted
+    const label = labels[i] ?? DEFAULT_COLOR_LABELS[i]
+    ctx.fillText(label, clampedX, labelY + staggerOffset)
+
+    // ▲ arrow (pointing up toward the bar)
+    ctx.fillStyle = '#6b6a85'
+    ctx.beginPath()
+    ctx.moveTo(cx, arrowY)
+    ctx.lineTo(cx - arrowSize, arrowY + arrowSize + 1)
+    ctx.lineTo(cx + arrowSize, arrowY + arrowSize + 1)
+    ctx.closePath()
+    ctx.fill()
+  }
+}
+
+// ── Color bar ──
+
+function drawColorBar(
+  ctx: CanvasRenderingContext2D,
+  boundaries: number[],
   x: number,
   y: number,
-  width: number,
-  height: number
+  w: number,
+  h: number,
+  labels: string[],
 ): void {
-  const steps = Math.ceil(width)
+  const regions = getColorRegions(boundaries)
+  const radius = 8
+
+  ctx.save()
+
+  // Clip to rounded rect
+  ctx.beginPath()
+  ctx.roundRect(x, y, w, h, radius)
+  ctx.clip()
+
+  // 1. Muted hue spectrum gradient
+  const steps = Math.ceil(w)
   for (let i = 0; i < steps; i++) {
     const hue = (i / steps) * 360
     ctx.fillStyle = `hsl(${hue}, 100%, 50%)`
-    ctx.fillRect(x + i, y, 1, height)
+    ctx.fillRect(x + i, y, 1, h)
   }
 
-  ctx.save()
-  const radius = 6
-  ctx.beginPath()
-  ctx.moveTo(x + radius, y)
-  ctx.lineTo(x + width - radius, y)
-  ctx.quadraticCurveTo(x + width, y, x + width, y + radius)
-  ctx.lineTo(x + width, y + height - radius)
-  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height)
-  ctx.lineTo(x + radius, y + height)
-  ctx.quadraticCurveTo(x, y + height, x, y + height - radius)
-  ctx.lineTo(x, y + radius)
-  ctx.quadraticCurveTo(x, y, x + radius, y)
-  ctx.closePath()
-  ctx.restore()
-}
+  // 2. Dark vignette — blend edges into background
+  const vignetteL = ctx.createLinearGradient(x, 0, x + 24, 0)
+  vignetteL.addColorStop(0, 'rgba(6, 6, 12, 0.5)')
+  vignetteL.addColorStop(1, 'transparent')
+  ctx.fillStyle = vignetteL
+  ctx.fillRect(x, y, 24, h)
 
-interface MarkerOptions {
-  color: string
-  lineWidth: number
-  dashed: boolean
-  markerHeight: number
-  position: 'above' | 'below'
-}
+  const vignetteR = ctx.createLinearGradient(x + w - 24, 0, x + w, 0)
+  vignetteR.addColorStop(0, 'transparent')
+  vignetteR.addColorStop(1, 'rgba(6, 6, 12, 0.5)')
+  ctx.fillStyle = vignetteR
+  ctx.fillRect(x + w - 24, y, 24, h)
 
-function drawBoundaryMarkers(
-  ctx: CanvasRenderingContext2D,
-  hues: number[],
-  barY: number,
-  barH: number,
-  barW: number,
-  opts: MarkerOptions
-): void {
-  ctx.save()
-  ctx.strokeStyle = opts.color
-  ctx.lineWidth = opts.lineWidth
-
-  if (opts.dashed) {
-    ctx.setLineDash([3, 3])
-  } else {
-    ctx.setLineDash([])
-  }
-
-  for (const hue of hues) {
-    const x = (normalizeHue(hue) / 360) * barW
-
-    if (opts.position === 'above') {
-      ctx.beginPath()
-      ctx.moveTo(x, barY - 2)
-      ctx.lineTo(x - 5, barY - opts.markerHeight)
-      ctx.lineTo(x + 5, barY - opts.markerHeight)
-      ctx.closePath()
-      ctx.fillStyle = opts.color
-      ctx.fill()
-
-      ctx.beginPath()
-      ctx.moveTo(x, barY)
-      ctx.lineTo(x, barY + barH)
-      ctx.stroke()
-    } else {
-      ctx.beginPath()
-      ctx.moveTo(x, barY)
-      ctx.lineTo(x, barY + barH)
-      ctx.stroke()
-
-      ctx.beginPath()
-      ctx.moveTo(x, barY + barH)
-      ctx.lineTo(x, barY + barH + opts.markerHeight)
-      ctx.stroke()
-    }
+  // 3. Boundary lines
+  for (const b of boundaries.map(normalizeHue)) {
+    const bx = x + (b / 360) * w
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.60)'
+    ctx.lineWidth = 1.5
+    ctx.beginPath()
+    ctx.moveTo(bx, y)
+    ctx.lineTo(bx, y + h)
+    ctx.stroke()
   }
 
   ctx.restore()
-}
 
-function drawColorLabels(
-  ctx: CanvasRenderingContext2D,
-  userBoundaries: number[],
-  barY: number,
-  barH: number,
-  barW: number,
-  labels: string[]
-): void {
-  ctx.save()
-  ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+  // 4. Labels at region centers with dark pill backdrop
+  const isNarrowBar = w < 500
+  const labelFontSize = isNarrowBar ? 10 : 12
+  ctx.font = `500 ${labelFontSize}px ${FONT}`
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
 
-  const N = labels.length
-  const normalized = userBoundaries.map(normalizeHue)
+  const pillPadX = isNarrowBar ? 5 : 7
+  const pillPadY = isNarrowBar ? 3 : 4
+  const pillRadius = isNarrowBar ? 4 : 5
 
-  const pillH = 16
-  const pillY = barY + barH + 14
+  for (let i = 0; i < regions.length; i++) {
+    const region = regions[i]
+    const colorIdx = COLOR_ORDER.indexOf(region.name)
+    if (colorIdx < 0) continue
+    const label = labels[colorIdx] ?? DEFAULT_COLOR_LABELS[colorIdx]
 
-  for (let i = 0; i < N; i++) {
-    const startHue = normalized[(i + N - 1) % N]
-    const endHue = normalized[i]
+    const span = clockwiseSpan(region.startHue, region.endHue)
+    const midHue = normalizeHue(region.startHue + span / 2)
+    const midX = x + (midHue / 360) * w
+    const segW = (span / 360) * w
 
-    // circularMidpoint handles 0°/360° wrap (naive average fails at violet→red boundary)
-    const midHue = circularMidpoint(startHue, endHue)
+    const textW = ctx.measureText(label).width
+    const pillW = textW + pillPadX * 2
+    if (pillW + 4 > segW) continue
 
-    const rawX = Math.round((midHue / 360) * barW)
-    const centerY = pillY + pillH / 2
-
-    const label = labels[i] ?? DEFAULT_COLOR_LABELS[i]
-    const metrics = ctx.measureText(label)
-    const paddingH = 6
-    const paddingV = 2
-    const pillW = metrics.width + paddingH * 2
-    const pillR = (pillH + paddingV * 2) / 2
-
-    // Clamp x to prevent label overflow at canvas edges
-    const halfPill = Math.ceil(pillW / 2)
-    const x = Math.max(halfPill + 2, Math.min(barW - halfPill - 2, rawX))
-
-    ctx.fillStyle = 'rgba(10, 10, 15, 0.75)'
+    // Dark pill background
+    const pillH = 12 + pillPadY * 2
+    const pX = midX - pillW / 2
+    const pY = y + (h - pillH) / 2
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.50)'
     ctx.beginPath()
-    ctx.roundRect(
-      Math.round(x - pillW / 2),
-      pillY - paddingV,
-      pillW,
-      pillH + paddingV * 2,
-      pillR
-    )
+    ctx.roundRect(pX, pY, pillW, pillH, pillRadius)
     ctx.fill()
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
-    ctx.fillText(label, x, centerY)
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.92)'
+    ctx.fillText(label, midX, y + h / 2)
   }
-
-  ctx.restore()
-}
-
-function drawLegend(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number
-): void {
-  ctx.save()
-  ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-  ctx.textBaseline = 'middle'
-
-  const legendY = height - 14
-
-  ctx.fillStyle = 'rgba(6, 6, 12, 0.5)'
-  ctx.beginPath()
-  ctx.roundRect(4, legendY - 12, width - 8, 24, 8)
-  ctx.fill()
-
-  const triX = 16
-  ctx.fillStyle = '#ffffff'
-  ctx.beginPath()
-  ctx.moveTo(triX, legendY + 2)
-  ctx.lineTo(triX - 5, legendY - 7)
-  ctx.lineTo(triX + 5, legendY - 7)
-  ctx.closePath()
-  ctx.fill()
-
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.92)'
-  ctx.textAlign = 'left'
-  ctx.fillText('Your boundaries', triX + 12, legendY - 2)
-
-  const typicalTextX = width - 114
-  ctx.save()
-  ctx.strokeStyle = 'rgba(45, 212, 191, 0.85)'
-  ctx.lineWidth = 2.5
-  ctx.setLineDash([5, 3])
-  ctx.beginPath()
-  ctx.moveTo(typicalTextX - 24, legendY - 2)
-  ctx.lineTo(typicalTextX - 6, legendY - 2)
-  ctx.stroke()
-  ctx.restore()
-
-  ctx.fillStyle = 'rgba(45, 212, 191, 1)'
-  ctx.textAlign = 'left'
-  ctx.fillText('Typical boundaries', typicalTextX, legendY - 2)
-
-  ctx.restore()
 }
 
 /**

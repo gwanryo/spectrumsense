@@ -37,6 +37,14 @@ export function renderLanding(
           </div>
         </div>
 
+        <div class="landing-how">
+          <div class="landing-how-header">${t('landing.how_title')}</div>
+          <ol class="landing-how-steps">
+            <li><span class="landing-how-num">1</span><span>${t('landing.how_step1')}</span></li>
+            <li><span class="landing-how-num">2</span><span>${t('landing.how_step2')}</span></li>
+            <li><span class="landing-how-num">3</span><span>${t('landing.how_step3')}</span></li>
+          </ol>
+        </div>
 
       </main>
     </div>
@@ -255,6 +263,61 @@ function injectLandingStyles(): void {
       font-weight: 300;
       animation: fadeIn 0.8s ease both;
       animation-delay: 0.55s;
+    }
+
+    .landing-how {
+      width: 100%;
+      max-width: 440px;
+      padding: 2rem 0;
+      animation: fadeIn 0.8s ease both;
+      animation-delay: 0.7s;
+    }
+
+    .landing-how-header {
+      font-family: var(--font-sans);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      text-align: center;
+      margin-bottom: 1.25rem;
+    }
+
+    .landing-how-steps {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .landing-how-steps li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.875rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      font-weight: 300;
+    }
+
+    .landing-how-num {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-top: 0.1rem;
     }
 
     @media (max-width: 375px) {

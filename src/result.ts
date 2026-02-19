@@ -1,21 +1,14 @@
 import type { Deviation, ColorRegion, ResultSummary } from './types'
 import { BOUNDARIES, circularDistance, normalizeHue } from './color'
 
-/**
- * Compute signed deviations between user's boundary values and standard values.
- * Positive = shifted clockwise, negative = shifted counter-clockwise.
- * Uses circular distance to handle the 0°/360° wrap-around correctly.
- */
 export function computeDeviations(userBoundaries: number[]): Deviation[] {
   return BOUNDARIES.map((boundary, i) => {
     const userHue = normalizeHue(userBoundaries[i] ?? boundary.standardHue)
     const standardHue = boundary.standardHue
-    // circularDistance(a, b) = signed distance from a to b
-    // Positive = b is clockwise from a
     const difference = circularDistance(standardHue, userHue)
 
     return {
-      boundary,
+      color: boundary.from,
       userHue,
       standardHue,
       difference,
@@ -59,7 +52,7 @@ export function summarizeResults(deviations: Deviation[]): ResultSummary {
   const meanAbsoluteDeviation =
     deviations.reduce((sum, d) => sum + Math.abs(d.difference), 0) / deviations.length
 
-  const mostShiftedBoundary = deviations.reduce((max, d) =>
+  const mostShifted = deviations.reduce((max, d) =>
     Math.abs(d.difference) > Math.abs(max.difference) ? d : max
   )
 
@@ -68,7 +61,7 @@ export function summarizeResults(deviations: Deviation[]): ResultSummary {
   return {
     deviations,
     meanAbsoluteDeviation,
-    mostShiftedBoundary,
+    mostShifted,
     colorRegions,
   }
 }

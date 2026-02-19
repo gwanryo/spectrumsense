@@ -1,6 +1,5 @@
 import type { TestResult } from './types'
 import { buildShareUrl } from './url-state'
-import { computeDeviations } from './result'
 import { t } from './i18n/index'
 
 export type ShareResult = 'shared' | 'copied' | 'cancelled' | 'failed'
@@ -9,12 +8,8 @@ export async function shareWebApi(result: TestResult): Promise<ShareResult> {
   if (!isWebShareSupported()) return 'failed'
 
   const shareUrl = buildShareUrl(result)
-  const deviations = computeDeviations(result.boundaries)
-  const meanDeviation = Math.round(
-    deviations.reduce((sum, d) => sum + Math.abs(d.difference), 0) / deviations.length
-  )
   const shareTitle = t('share.title')
-  const shareDescription = t('share.description', { deviation: meanDeviation })
+  const shareDescription = t('share.description')
   const isMobile = isLikelyMobileDevice()
 
   if (isWindowsDesktop()) {

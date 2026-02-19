@@ -21,8 +21,8 @@ describe('computeMarkerOffsets', () => {
   it('normalizes differences into (-180, 180] for wrap-around values', () => {
     const boundaries = [350, 48, 78, 163, 258, 300, 5]
     const offsets = computeMarkerOffsets(boundaries, 700)
-    expect(offsets[0].degreeDiff).toBeCloseTo(-28, 0)
-    expect(offsets[6].degreeDiff).toBeCloseTo(20, 0)
+    expect(offsets[0].degreeDiff).toBeCloseTo(-30, 0)
+    expect(offsets[6].degreeDiff).toBeCloseTo(10, 0)
     for (const offset of offsets) {
       expect(offset.degreeDiff).toBeGreaterThanOrEqual(-180)
       expect(offset.degreeDiff).toBeLessThanOrEqual(180)
@@ -30,7 +30,7 @@ describe('computeMarkerOffsets', () => {
   })
 
   it('falls back to standard hue when boundary value is missing', () => {
-    const partial = [18, 48]
+    const partial = [20, 50]
     const offsets = computeMarkerOffsets(partial, 700)
     expect(offsets[2].degreeDiff).toBeCloseTo(0, 5)
     expect(offsets[6].degreeDiff).toBeCloseTo(0, 5)

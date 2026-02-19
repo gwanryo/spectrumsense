@@ -3,7 +3,7 @@ import { computeDeviations, getColorRegions, summarizeResults } from '../src/res
 import { BOUNDARIES } from '../src/color'
 
 const standardBoundaries = BOUNDARIES.map(b => b.standardHue)
-// [18, 48, 78, 163, 258, 300, 345]
+// [20, 50, 90, 180, 270, 325, 355]
 
 describe('computeDeviations', () => {
   it('returns zero deviation for exact standard boundaries', () => {
@@ -15,31 +15,31 @@ describe('computeDeviations', () => {
   })
 
   it('returns correct positive deviation for clockwise shift', () => {
-    // User sees Red→Orange at 28° instead of 18° (+10° clockwise)
+    // User sees Red→Orange at 28° instead of 20° (+8° clockwise)
     const shifted = [...standardBoundaries]
     shifted[0] = 28
     const deviations = computeDeviations(shifted)
-    expect(deviations[0].difference).toBeCloseTo(10, 0)
+    expect(deviations[0].difference).toBeCloseTo(8, 0)
     expect(deviations[0].userHue).toBe(28)
-    expect(deviations[0].standardHue).toBe(18)
+    expect(deviations[0].standardHue).toBe(20)
   })
 
   it('returns correct negative deviation for counter-clockwise shift', () => {
-    // User sees Orange→Yellow at 38° instead of 48° (-10° counter-clockwise)
+    // User sees Orange→Yellow at 38° instead of 50° (-12° counter-clockwise)
     const shifted = [...standardBoundaries]
     shifted[1] = 38
     const deviations = computeDeviations(shifted)
-    expect(deviations[1].difference).toBeCloseTo(-10, 0)
+    expect(deviations[1].difference).toBeCloseTo(-12, 0)
   })
 
   it('CRITICAL: handles circular distance for Pink→Red boundary', () => {
-    // Standard Pink→Red is at 345°
-    // User sees it at 5° — that's +20° clockwise (not -340°)
+    // Standard Pink→Red is at 355°
+    // User sees it at 5° — that's +10° clockwise (not -350°)
     const shifted = [...standardBoundaries]
     shifted[6] = 5
     const deviations = computeDeviations(shifted)
-    // circularDistance(345, 5) should be +20° (clockwise), not -340°
-    expect(deviations[6].difference).toBeCloseTo(20, 0)
+    // circularDistance(355, 5) should be +10° (clockwise), not -350°
+    expect(deviations[6].difference).toBeCloseTo(10, 0)
     expect(Math.abs(deviations[6].difference)).toBeLessThan(180)
   })
 
@@ -47,13 +47,11 @@ describe('computeDeviations', () => {
     // This is the specific test case from the plan
     const boundaries = [...standardBoundaries]
     boundaries[6] = 5 // user boundary at 5°
-    // Standard for Pink→Red is 345°, but let's test with 355° explicitly
+    // Standard for Pink→Red is 355°
     // We need to test circularDistance(355, 5) = +10°
-    // Since BOUNDARIES[5].standardHue = 345, let's test with a boundary at 355
-    // by checking the circularDistance function directly via result computation
     // Use a custom test: deviation should be small, not large
     const deviations = computeDeviations(boundaries)
-    // deviation[6]: circularDistance(345, 5) = +20° (not -340°)
+    // deviation[6]: circularDistance(355, 5) = +10° (not -350°)
     expect(Math.abs(deviations[6].difference)).toBeLessThan(180)
     expect(deviations[6].difference).toBeGreaterThan(0) // clockwise shift
   })
@@ -61,9 +59,9 @@ describe('computeDeviations', () => {
   it('returns 7 deviations for 7 boundaries', () => {
     const deviations = computeDeviations(standardBoundaries)
     expect(deviations).toHaveLength(7)
-    expect(deviations[0].boundary.from).toBe('red')
-    expect(deviations[5].boundary.from).toBe('violet')
-    expect(deviations[6].boundary.from).toBe('pink')
+    expect(deviations[0].color).toBe('red')
+    expect(deviations[5].color).toBe('violet')
+    expect(deviations[6].color).toBe('pink')
   })
 
   it('falls back to standard hues when input has fewer than 7 boundaries', () => {
@@ -121,10 +119,10 @@ describe('summarizeResults', () => {
 
   it('identifies most shifted boundary', () => {
     const shifted = [...standardBoundaries]
-    shifted[2] = 98 // Yellow→Green shifted by +20°
+    shifted[2] = 110 // Yellow→Green shifted by +20°
     const deviations = computeDeviations(shifted)
     const summary = summarizeResults(deviations)
-    expect(summary.mostShiftedBoundary.boundary.from).toBe('yellow')
+    expect(summary.mostShifted.color).toBe('yellow')
   })
 
   it('includes color regions', () => {
@@ -133,3 +131,5 @@ describe('summarizeResults', () => {
     expect(summary.colorRegions).toHaveLength(7)
   })
 })
+
+
