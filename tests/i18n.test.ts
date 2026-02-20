@@ -24,7 +24,7 @@ describe('i18n key parity', () => {
   })
 
   it('all locales have required color keys', () => {
-    const colorKeys = ['colors.red', 'colors.orange', 'colors.yellow', 'colors.green', 'colors.blue', 'colors.violet', 'colors.pink']
+    const colorKeys = ['colors.red', 'colors.orange', 'colors.yellow', 'colors.green', 'colors.cyan', 'colors.blue', 'colors.violet', 'colors.pink']
     for (const key of colorKeys) {
       expect(en).toHaveProperty(key)
       expect(ko).toHaveProperty(key)

@@ -1,33 +1,45 @@
 import type { TestResult, Locale } from './types'
 
-// Encoding format (compact binary):
-// - 7 boundary hues: each stored as 2 bytes (uint16, 0-360 mapped to 0-3600 for 0.1° precision)
+// Encoding format (compact binary, minimum 19 bytes):
+// - 8 boundary hues: 16 bytes (uint16 each, 0-360 mapped to 0-3600 for 0.1° precision)
 // - 1 byte: mode (0=normal, 1=refine)
 // - 1 byte: locale (0=en, 1=ko, 2=ja)
-// Total: 16 bytes → ~22 chars Base64URL
+// - 1 byte: nickname length in UTF-8 bytes (0 = no nickname)
+// - N bytes: nickname UTF-8 bytes
+
+const BOUNDARY_COUNT = 8
+const HEADER_SIZE = BOUNDARY_COUNT * 2 + 2
+const MIN_PAYLOAD_SIZE = HEADER_SIZE + 1
 
 const LOCALE_MAP: Locale[] = ['en', 'ko', 'ja']
 const BASE_URL = 'https://rwe.kr/spectrumsense/'
 
 /** Encode a TestResult into a compact Base64URL string */
 export function encodeResult(result: TestResult): string {
-  const buffer = new ArrayBuffer(16)
+  const nickname = (result.nickname ?? '').trim()
+  const nicknameBytes = nickname ? new TextEncoder().encode(nickname) : new Uint8Array(0)
+  const payloadSize = MIN_PAYLOAD_SIZE + nicknameBytes.length
+
+  const buffer = new ArrayBuffer(payloadSize)
   const view = new DataView(buffer)
 
-  // 7 boundaries × 2 bytes each (stored as tenths of degrees, 0–3600)
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < BOUNDARY_COUNT; i++) {
     const hue = Math.round(((result.boundaries[i] ?? 0) % 360 + 360) % 360 * 10)
-    view.setUint16(i * 2, hue, false) // big-endian
+    view.setUint16(i * 2, hue, false)
   }
 
-  // Mode byte
-  view.setUint8(14, result.mode === 'refine' ? 1 : 0)
+  const modeOffset = BOUNDARY_COUNT * 2
+  view.setUint8(modeOffset, result.mode === 'refine' ? 1 : 0)
 
-  // Locale byte
   const localeIndex = LOCALE_MAP.indexOf(result.locale)
-  view.setUint8(15, localeIndex >= 0 ? localeIndex : 0)
+  view.setUint8(modeOffset + 1, localeIndex >= 0 ? localeIndex : 0)
 
-  // Convert to Base64URL
+  view.setUint8(HEADER_SIZE, nicknameBytes.length)
+  if (nicknameBytes.length > 0) {
+    const bytes = new Uint8Array(buffer)
+    bytes.set(nicknameBytes, MIN_PAYLOAD_SIZE)
+  }
+
   const bytes = new Uint8Array(buffer)
   let binary = ''
   for (const byte of bytes) {
@@ -44,45 +56,45 @@ export function decodeResult(encoded: string): TestResult | null {
   if (!encoded || typeof encoded !== 'string') return null
 
   try {
-    // Restore Base64 padding and characters
     const base64 = encoded
       .replace(/-/g, '+')
       .replace(/_/g, '/')
       .padEnd(encoded.length + (4 - (encoded.length % 4)) % 4, '=')
 
     const binary = atob(base64)
-    if (binary.length !== 16) return null
 
-    const buffer = new ArrayBuffer(16)
+    if (binary.length < MIN_PAYLOAD_SIZE) return null
+
+    const buffer = new ArrayBuffer(binary.length)
     const view = new DataView(buffer)
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < binary.length; i++) {
       view.setUint8(i, binary.charCodeAt(i))
     }
 
-    // Decode 7 boundaries
     const boundaries: number[] = []
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < BOUNDARY_COUNT; i++) {
       const raw = view.getUint16(i * 2, false)
-      const hue = raw / 10 // convert back from tenths
+      const hue = raw / 10
       if (hue < 0 || hue > 360) return null
       boundaries.push(hue)
     }
 
-    // Decode mode
-    const modeByte = view.getUint8(14)
+    const modeOffset = BOUNDARY_COUNT * 2
+    const modeByte = view.getUint8(modeOffset)
     if (modeByte !== 0 && modeByte !== 1) return null
     const mode: 'normal' | 'refine' = modeByte === 1 ? 'refine' : 'normal'
 
-    // Decode locale
-    const localeByte = view.getUint8(15)
+    const localeByte = view.getUint8(modeOffset + 1)
     const locale: Locale = LOCALE_MAP[localeByte] ?? 'en'
 
-    return {
-      boundaries,
-      mode,
-      timestamp: Date.now(),
-      locale,
+    let nickname: string | undefined
+    const nickLen = view.getUint8(HEADER_SIZE)
+    if (nickLen > 0 && MIN_PAYLOAD_SIZE + nickLen <= binary.length) {
+      const nickBytes = new Uint8Array(buffer, MIN_PAYLOAD_SIZE, nickLen)
+      nickname = new TextDecoder().decode(nickBytes)
     }
+
+    return { boundaries, mode, timestamp: Date.now(), locale, nickname }
   } catch {
     return null
   }

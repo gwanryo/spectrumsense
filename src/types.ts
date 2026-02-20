@@ -1,6 +1,6 @@
 // SpectrumSense — TypeScript Type Definitions
 
-export type ColorName = 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'violet' | 'pink';
+export type ColorName = 'red' | 'orange' | 'yellow' | 'green' | 'cyan' | 'blue' | 'violet' | 'pink';
 
 export interface ColorTransition {
   from: ColorName;
@@ -67,10 +67,11 @@ export interface TestState {
 }
 
 export interface TestResult {
-  boundaries: number[];  // 7 hue values: [R→O, O→Y, Y→G, G→B, B→V, V→P, P→R]
+  boundaries: number[];  // 8 hue values: [R→O, O→Y, Y→G, G→C, C→B, B→V, V→P, P→R]
   mode: 'normal' | 'refine';
   timestamp: number;
   locale: Locale;
+  nickname?: string;
 }
 
 export interface Deviation {

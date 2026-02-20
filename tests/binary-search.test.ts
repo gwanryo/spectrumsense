@@ -39,7 +39,7 @@ describe('initBinarySearch', () => {
   })
 
   it('initial hue is within search range', () => {
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 7; i++) {
       const state = initBinarySearch(COLOR_TRANSITIONS[i], SEARCH_RANGES[i])
       expect(state.currentHue).toBeGreaterThanOrEqual(SEARCH_RANGES[i].low)
       expect(state.currentHue).toBeLessThanOrEqual(SEARCH_RANGES[i].high)
@@ -133,9 +133,9 @@ describe('Normal boundary convergence (Orange->Yellow)', () => {
   })
 })
 
-describe('Violet->Pink boundary convergence (boundary index 5)', () => {
+describe('Violet->Pink boundary convergence (boundary index 6)', () => {
   it('initial hue is in violet-pink range', () => {
-    const state = initBinarySearch(COLOR_TRANSITIONS[5], SEARCH_RANGES[5])
+    const state = initBinarySearch(COLOR_TRANSITIONS[6], SEARCH_RANGES[6])
     const hue = state.currentHue
     expect(hue).toBeGreaterThanOrEqual(280)
     expect(hue).toBeLessThanOrEqual(350)
@@ -150,7 +150,7 @@ describe('Violet->Pink boundary convergence (boundary index 5)', () => {
     ]
 
     for (const choices of choicePatterns) {
-      const { hues } = runSearch(5, choices)
+      const { hues } = runSearch(6, choices)
       for (const hue of hues) {
         expect(hue).toBeGreaterThanOrEqual(280)
         expect(hue).toBeLessThanOrEqual(350)
@@ -160,15 +160,15 @@ describe('Violet->Pink boundary convergence (boundary index 5)', () => {
 
   it('final result is in violet-pink range', () => {
     const choices = [true, false, true, false, true, false]
-    const { result } = runSearch(5, choices)
+    const { result } = runSearch(6, choices)
     expect(result).toBeGreaterThanOrEqual(280)
     expect(result).toBeLessThanOrEqual(350)
   })
 })
 
-describe('CRITICAL: Pink->Red wrap-around (boundary index 6)', () => {
+describe('CRITICAL: Pink->Red wrap-around (boundary index 7)', () => {
   it('initial hue is in pink-red region (not green/blue)', () => {
-    const state = initBinarySearch(COLOR_TRANSITIONS[6], SEARCH_RANGES[6])
+    const state = initBinarySearch(COLOR_TRANSITIONS[7], SEARCH_RANGES[7])
     const hue = state.currentHue
     const isInValidRange = hue >= 300 || hue <= 30
     expect(isInValidRange).toBe(true)
@@ -183,7 +183,7 @@ describe('CRITICAL: Pink->Red wrap-around (boundary index 6)', () => {
     ]
 
     for (const choices of choicePatterns) {
-      const { hues } = runSearch(6, choices)
+      const { hues } = runSearch(7, choices)
       for (const hue of hues) {
         const isInValidRange = hue >= 300 || hue <= 30
         expect(isInValidRange).toBe(true)
@@ -193,13 +193,13 @@ describe('CRITICAL: Pink->Red wrap-around (boundary index 6)', () => {
 
   it('final result is in pink-red region', () => {
     const choices = [true, false, true, false, true, false]
-    const { result } = runSearch(6, choices)
+    const { result } = runSearch(7, choices)
     const isInValidRange = result >= 300 || result <= 30
     expect(isInValidRange).toBe(true)
   })
 
   it('never produces a hue near 181 degrees (the naive midpoint error)', () => {
-    const { hues } = runSearch(6, [true, false, true, false, true, false])
+    const { hues } = runSearch(7, [true, false, true, false, true, false])
     for (const hue of hues) {
       expect(Math.abs(hue - 181)).toBeGreaterThan(50)
     }

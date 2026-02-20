@@ -3,10 +3,10 @@ import type { ColorTransition, ColorName, SearchRange } from './types'
 // ── Standard Color Hues (single source of truth) ──
 // Reference: https://html-color.codes/
 export const STANDARD_COLORS: Record<ColorName, number> = {
-  red: 0, orange: 39, yellow: 60, green: 120, blue: 240, violet: 300, pink: 350,
+  red: 0, orange: 39, yellow: 60, green: 120, cyan: 180, blue: 240, violet: 300, pink: 350,
 }
 
-export const COLOR_ORDER: ColorName[] = ['red', 'orange', 'yellow', 'green', 'blue', 'violet', 'pink']
+export const COLOR_ORDER: ColorName[] = ['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'violet', 'pink']
 
 // Display-quality HSL per color (S/L tuned for visual appearance)
 const COLOR_DISPLAY: Record<ColorName, { s: number; l: number }> = {
@@ -14,6 +14,7 @@ const COLOR_DISPLAY: Record<ColorName, { s: number; l: number }> = {
   orange: { s: 100, l: 55 },
   yellow: { s: 100, l: 50 },
   green:  { s: 70,  l: 45 },
+  cyan:   { s: 100, l: 50 },
   blue:   { s: 100, l: 55 },
   violet: { s: 80,  l: 60 },
   pink:   { s: 80,  l: 55 },
@@ -37,7 +38,8 @@ export const SEARCH_RANGES: SearchRange[] = [
   { low: 0, high: 40 },
   { low: 30, high: 70 },
   { low: 55, high: 120 },
-  { low: 120, high: 230 },
+  { low: 120, high: 185 },
+  { low: 175, high: 240 },
   { low: 220, high: 310 },
   { low: 280, high: 350 },
   { low: 330, high: 390 },
@@ -99,18 +101,18 @@ export function hslString(hue: number): string {
 
 /**
  * Given a hue value and a set of user boundaries, return which color region it falls in.
- * Boundaries array: [R→O, O→Y, Y→G, G→B, B→V, V→P, P→R]
+ * Boundaries array: [R→O, O→Y, Y→G, G→C, C→B, B→V, V→P, P→R]
  */
 export function getColorName(hue: number, boundaries: number[]): ColorName {
   const h = normalizeHue(hue)
-  const [ro, oy, yg, gb, bv, vp, pr] = boundaries.map(normalizeHue)
+  const [ro, oy, yg, gc, cb, bv, vp, pr] = boundaries.map(normalizeHue)
 
-  // Check each region in order
   if (h >= pr || h < ro) return 'red'
   if (h >= ro && h < oy) return 'orange'
   if (h >= oy && h < yg) return 'yellow'
-  if (h >= yg && h < gb) return 'green'
-  if (h >= gb && h < bv) return 'blue'
+  if (h >= yg && h < gc) return 'green'
+  if (h >= gc && h < cb) return 'cyan'
+  if (h >= cb && h < bv) return 'blue'
   if (h >= bv && h < vp) return 'violet'
   return 'pink'
 }

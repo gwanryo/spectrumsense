@@ -15,8 +15,8 @@ import {
 } from './binary-search'
 import { COLOR_TRANSITIONS, SEARCH_RANGES } from './color'
 
-const NORMAL_STEPS = 6
-const REFINE_STEPS = 3
+const NORMAL_STEPS = 5
+const REFINE_STEPS = 2
 
 function shuffleArray(arr: number[]): number[] {
   const shuffled = [...arr]

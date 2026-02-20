@@ -1,13 +1,13 @@
 {
   "landing.title": "スペクトラムセンス",
   "landing.subtitle": "あなたの色覚境界を発見しよう",
-  "landing.description": "色の境界は人によって異なります。このテストは二分探索を使って、あなたが赤・橙・黄・緑・青・紫・ピンクをどこで区別するかを正確に見つけます。",
-  "landing.duration": "約3〜5分 · 約50問",
+  "landing.description": "色の境界は人によって異なります。このテストは二分探索を使って、あなたが赤・橙・黄・緑・シアン・青・紫・ピンクをどこで区別するかを正確に見つけます。",
+  "landing.duration": "約2〜3分 · 約50問",
   "landing.start": "テストを始める",
   "landing.disclaimer": "キャリブレーションされたディスプレイと中立的な照明環境で最も正確に測定できます。",
   "landing.how_title": "テストの流れ",
   "landing.how_step1": "表示された色が隣接する2つの色名のどちらに近いかを選びます",
-  "landing.how_step2": "二分探索アルゴリズムが回答をもとに7つの色の境界を精密に絞り込みます",
+  "landing.how_step2": "二分探索アルゴリズムが回答をもとに8つの色の境界を精密に絞り込みます",
   "landing.how_step3": "測定されたあなただけの色地図を基準色と比較します",
 
   "landing.lang.en": "English",
@@ -37,6 +37,7 @@
   "colors.orange": "橙",
   "colors.yellow": "黄",
   "colors.green": "緑",
+  "colors.cyan": "シアン",
   "colors.blue": "青",
   "colors.violet": "紫",
   "colors.pink": "ピンク",
@@ -55,7 +56,7 @@
   "results.legend_reference": "基準色",
 
   "results.citation": "参考文献",
-  "results.refine": "精密測定（+21問）",
+  "results.refine": "精密測定（+18問）",
   "results.retake": "再テスト",
 
   "results.summary_avg": "平均偏差",

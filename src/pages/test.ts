@@ -18,7 +18,7 @@ const MIN_RESPONSE_TIME_MS = 300
 
 const WARMUP_QUESTIONS: { hue: number; from: string; to: string }[] = [
   { hue: 0, from: 'colors.red', to: 'colors.orange' },
-  { hue: 200, from: 'colors.green', to: 'colors.blue' },
+  { hue: 200, from: 'colors.cyan', to: 'colors.blue' },
 ]
 
 export function renderTest(
@@ -263,6 +263,8 @@ function startRealTest(
     if (isTestComplete(state)) {
       document.body.style.overflow = ''
       const results = getTestResults(state, locale)
+      const nick = sessionStorage.getItem('spectrumsense-nickname')?.trim()
+      if (nick) results.nickname = nick
       showConfirmationScreen(results)
       return
     }

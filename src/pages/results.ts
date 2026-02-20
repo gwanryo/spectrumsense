@@ -19,7 +19,7 @@ export function renderResults(container: HTMLElement): void {
   const deviations = computeDeviations(result.boundaries)
   const summary = summarizeResults(deviations, result.boundaries)
 
-  const nickname = (sessionStorage.getItem('spectrumsense-nickname') ?? '').trim()
+  const nickname = (result.nickname ?? sessionStorage.getItem('spectrumsense-nickname') ?? '').trim()
   const title = nickname
     ? t('results.title_with_nickname').replace('{nickname}', escapeHtml(nickname))
     : t('results.title')
@@ -108,7 +108,7 @@ export function renderResults(container: HTMLElement): void {
     renderSpectrumBar(canvas, result.boundaries, {
       colorLabels: [
         t('colors.red'), t('colors.orange'), t('colors.yellow'),
-        t('colors.green'), t('colors.blue'), t('colors.violet'), t('colors.pink'),
+        t('colors.green'), t('colors.cyan'), t('colors.blue'), t('colors.violet'), t('colors.pink'),
       ],
       labelUser: t('results.legend_user'),
       labelReference: t('results.legend_reference'),

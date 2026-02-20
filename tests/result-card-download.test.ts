@@ -4,7 +4,7 @@ import { downloadGeneratedResultCard, downloadResultCard } from '../src/canvas/r
 
 function makeResult(): TestResult {
   return {
-    boundaries: [20, 48, 82, 170, 255, 322, 350],
+    boundaries: [20, 48, 82, 148, 208, 255, 322, 350],
     mode: 'normal',
     timestamp: 0,
     locale: 'en',

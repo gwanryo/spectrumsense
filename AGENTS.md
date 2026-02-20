@@ -25,7 +25,7 @@ src/
 ├── binary-search.ts      # 경계별 이진 탐색
 ├── state-machine.ts      # 테스트 진행/셔플/캐치 트라이얼
 ├── result.ts             # 편차/영역 계산
-├── url-state.ts          # 16-byte 결과 인코딩
+├── url-state.ts          # 결과+닉네임 바이너리 인코딩
 ├── sharing.ts            # 공유/복사
 ├── router.ts             # 해시 라우팅
 ├── main.ts               # 엔트리
@@ -82,10 +82,13 @@ src/
 
 ### URL state format (critical)
 
-- 총 16 bytes (고정)
-- 경계값 14 bytes (`7 * uint16`, 0.1°)
-- offset 14: mode (`0=normal`, `1=refine`)
-- offset 15: locale (`0=en`, `1=ko`, `2=ja`)
+- 최소 19 bytes (닉네임 길이 바이트 항상 포함)
+- 경계값 16 bytes (`8 * uint16`, 0.1°)
+- offset 16: mode (`0=normal`, `1=refine`)
+- offset 17: locale (`0=en`, `1=ko`, `2=ja`)
+- offset 18: nickname length (UTF-8 바이트 수, 0이면 닉네임 없음)
+- offset 19+: nickname UTF-8 bytes
+
 
 ## UI/Style Conventions
 
@@ -94,23 +97,24 @@ src/
 - CJK 폴백: `--font-sans`, `--font-mono`에 Noto Sans KR/JP 유지
 - 페이지별 스타일은 `injectTestStyles()`, `injectResultsStyles()`에서 동적 주입
 - 결과 액션 행은 `.actions-row` 사용 (Retake/Copy/WebShare/Download)
-- 결과 헤더는 `sessionStorage['spectrumsense-nickname']`가 있으면 타이틀에 닉네임 포함
+- 결과 헤더는 URL 디코딩된 닉네임 또는 `sessionStorage['spectrumsense-nickname']` 순으로 타이틀에 닉네임 포함
 - 스펙트럼 레전드는 상단(user boundaries) + 하단(reference color positions, ▲ marker) 2행 구조 유지
 
 ## Critical Invariants (Do Not Break)
 
 1. i18n 키 3개 locale 완전 일치 (`tests/i18n.test.ts`)
 2. 경계 개수 관련 동적 패턴(`COLOR_TRANSITIONS.length`) 유지
-3. URL 포맷 16 bytes 고정
+3. URL 포맷 최소 19 bytes (닉네임 길이 바이트 항상 포함)
 4. `vite.config.ts` base는 `/spectrumsense/` 고정
 5. runtime dependencies 추가 금지
-6. `NORMAL_STEPS=6`, `REFINE_STEPS=3` 유지
+6. `NORMAL_STEPS=5`, `REFINE_STEPS=2` 유지
 7. 닉네임 저장 키는 `spectrumsense-nickname` 유지 (sessionStorage)
+8. 닉네임은 URL 인코딩에 포함되어 공유 링크에서도 표시
 
 ## Known Pitfalls
 
 - `color.ts/getColorName()`은 7개 영역 하드 분기라 경계 변경 시 필수 수정
-- `url-state.ts`는 바이트 오프셋 하드코딩 (14/15/16)
+- `url-state.ts`는 바이트 오프셋 하드코딩 (16/17/18)
 - `result-card.ts` 색상명은 i18n이 아니라 내부 하드코딩
 - `computeRegionCenter()`는 사용자 경계 span의 순수 기하학적 중점 (기준 색상 가중치 미사용)
 - `result.ts/getColorRegions()`에서 모듈러는 항상 `COLOR_TRANSITIONS.length`

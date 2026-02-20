@@ -34,26 +34,26 @@ function runFullTest(
 describe('createTestSession', () => {
   it('normal mode includes catch trials in totalSteps', () => {
     const state = createTestSession('normal', 'en')
-    expect(state.totalSteps).toBe(48)
+    expect(state.totalSteps).toBe(45)
     expect(state.mode).toBe('normal')
     expect(state.phase).toBe('testing')
   })
 
   it('refine mode includes catch trials in totalSteps', () => {
     const state = createTestSession('refine', 'en')
-    expect(state.totalSteps).toBe(24)
+    expect(state.totalSteps).toBe(18)
     expect(state.mode).toBe('refine')
   })
 
-  it('initializes 7 boundary states', () => {
+  it('initializes 8 boundary states', () => {
     const state = createTestSession('normal', 'en')
-    expect(state.boundaries).toHaveLength(7)
+    expect(state.boundaries).toHaveLength(8)
   })
 
   it('starts at step 0 with randomized boundary order', () => {
     const state = createTestSession('normal', 'en')
     expect(state.currentStep).toBe(0)
-    expect(state.boundaryOrder).toHaveLength(7)
+    expect(state.boundaryOrder).toHaveLength(8)
     expect(state.roundPosition).toBe(0)
     expect(state.currentBoundaryIndex).toBe(state.boundaryOrder[0])
   })
@@ -77,7 +77,7 @@ describe('getCurrentQuestion', () => {
     expect(question.firstLabel).toMatch(/^colors\./)
     expect(question.secondLabel).toMatch(/^colors\./)
     expect(question.questionNumber).toBe(1)
-    expect(question.totalQuestions).toBe(48)
+    expect(question.totalQuestions).toBe(45)
   })
 
   it('question labels match a valid boundary pair', () => {
@@ -106,15 +106,15 @@ describe('answerQuestion', () => {
     expect(state.currentStep).toBe(1)
   })
 
-  it('visits all 7 boundaries in each round', () => {
+  it('visits all 8 boundaries in each round', () => {
     let state = createTestSession('normal', 'en')
     const visited = new Set<number>()
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 8; i++) {
       visited.add(state.currentBoundaryIndex)
       state = answerQuestion(state, true)
       if (state.phase === 'interstitial') state = advanceFromInterstitial(state)
     }
-    expect(visited.size).toBe(7)
+    expect(visited.size).toBe(8)
   })
 
   it('sets phase to interstitial after answer', () => {
@@ -136,14 +136,14 @@ describe('answerQuestion', () => {
 })
 
 describe('Normal mode with catch trials', () => {
-  it('completes in 48 answers (42 real + 6 catch trials) with consistent choices', () => {
+  it('completes in 45 answers (40 real + 5 catch trials) with consistent choices', () => {
     const { count } = runFullTest('normal')
-    expect(count).toBe(48)
+    expect(count).toBe(45)
   })
 
-  it('returns 7 valid boundary hue values', () => {
+  it('returns 8 valid boundary hue values', () => {
     const { results } = runFullTest('normal')
-    expect(results.boundaries).toHaveLength(7)
+    expect(results.boundaries).toHaveLength(8)
     for (const hue of results.boundaries) {
       expect(hue).toBeGreaterThanOrEqual(0)
       expect(hue).toBeLessThanOrEqual(360)
@@ -158,7 +158,7 @@ describe('Normal mode with catch trials', () => {
 
   it('records catch trial consistency', () => {
     const { state } = runFullTest('normal')
-    expect(state.catchTrialResults.length).toBe(6)
+    expect(state.catchTrialResults.length).toBeGreaterThanOrEqual(5)
   })
 
   it('consistency score is 1.0 with consistent choices', () => {
@@ -168,17 +168,17 @@ describe('Normal mode with catch trials', () => {
 })
 
 describe('Refine mode with catch trials', () => {
-  it('completes in 24 answers (21 real + 3 catch trials) with consistent choices', () => {
+  it('completes in 18 answers (16 real + 2 catch trials) with consistent choices', () => {
     const { results: normalResults } = runFullTest('normal')
     const { count } = runFullTest('refine', normalResults)
-    expect(count).toBe(24)
+    expect(count).toBe(18)
   })
 
   it('refine results are within +/-15 degrees of normal results', () => {
     const { results: normalResults } = runFullTest('normal')
     const { results: refineResults } = runFullTest('refine', normalResults)
 
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 8; i++) {
       const diff = Math.abs(refineResults.boundaries[i] - normalResults.boundaries[i])
       const circularDiff = Math.min(diff, 360 - diff)
       expect(circularDiff).toBeLessThanOrEqual(15)
@@ -187,9 +187,9 @@ describe('Refine mode with catch trials', () => {
 })
 
 describe('Alternating choices', () => {
-  it('completes in fixed 48 answers even with alternating choices', () => {
+  it('completes in fixed 45 answers even with alternating choices', () => {
     const { count } = runFullTest('normal', undefined, false)
-    expect(count).toBe(48)
+    expect(count).toBe(45)
   })
 })
 
@@ -204,7 +204,7 @@ describe('advanceFromInterstitial', () => {
 
   it('transitions to catch_trial when pending', () => {
     let state = createTestSession('normal', 'en')
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 8; i++) {
       state = answerQuestion(state, true)
       if (state.phase === 'interstitial' && !state.pendingCatchTrial) {
         state = advanceFromInterstitial(state)

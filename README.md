@@ -35,8 +35,8 @@ SpectrumSense is a framework-free TypeScript web app that measures where users p
 
 Default question counts:
 
-- Normal mode: `7 boundaries x 6 steps = 42` main questions (+ warm-up and catch trial)
-- Refine mode: `7 boundaries x 3 steps = 21` questions
+- Normal mode: `8 boundaries x 5 steps = 40` main questions (+ warm-up and catch trial)
+- Refine mode: `8 boundaries x 2 steps = 16` questions
 
 ## Color Model
 
@@ -57,7 +57,7 @@ Reference alignment uses the project’s selected sources: HTML Color Codes, XKC
 
 ## Results Output
 
-- Header can display the saved nickname from the test setup screen.
+- Header displays the nickname from the shared URL or the local session.
 - Spectrum bar shows user boundaries in-bar and reference color positions as bottom `▲` markers.
 - Summary stats highlight average deviation and the single largest shifted color.
 - Per-color cards compare reference hue vs measured hue and show signed difference badges.
@@ -119,11 +119,14 @@ Current suite covers:
 
 ## URL State Format
 
-Result snapshots are encoded into a fixed 16-byte payload:
+Result snapshots are encoded into a compact binary payload:
 
-- `0..13`: 7 boundary values as `uint16` in `0.1deg`
-- `14`: mode (`0=normal`, `1=refine`)
-- `15`: locale (`0=en`, `1=ko`, `2=ja`)
+- `0..15`: 8 boundary values as `uint16` in `0.1deg`
+- `16`: mode (`0=normal`, `1=refine`)
+- `17`: locale (`0=en`, `1=ko`, `2=ja`)
+- `18`: nickname length in UTF-8 bytes (0 when no nickname, always present)
+- `19+`: nickname UTF-8 bytes
+
 
 ## Deployment
 

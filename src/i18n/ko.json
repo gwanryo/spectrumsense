@@ -1,13 +1,13 @@
 {
   "landing.title": "스펙트럼센스",
   "landing.subtitle": "나만의 색상 경계를 발견하세요",
-  "landing.description": "사람마다 색상 경계를 다르게 인식합니다. 이 테스트는 이진 탐색으로 당신이 빨강, 주황, 노랑, 초록, 파랑, 보라, 분홍을 어디서 구분하는지 정확히 찾아냅니다.",
-  "landing.duration": "약 3~5분 소요 · ~50문항",
+  "landing.description": "사람마다 색상 경계를 다르게 인식합니다. 이 테스트는 이진 탐색으로 당신이 빨강, 주황, 노랑, 초록, 청록, 파랑, 보라, 분홍을 어디서 구분하는지 정확히 찾아냅니다.",
+  "landing.duration": "약 2~3분 소요 · ~50문항",
   "landing.start": "테스트 시작",
   "landing.disclaimer": "색상 보정된 디스플레이와 중립적인 조명 환경에서 가장 정확합니다.",
   "landing.how_title": "진행 방식",
   "landing.how_step1": "화면에 표시된 색상이 인접한 두 색 중 어느 쪽에 가까운지 선택합니다",
-  "landing.how_step2": "이진 탐색 알고리즘이 응답을 바탕으로 7개 색상 경계를 정밀하게 좁혀갑니다",
+  "landing.how_step2": "이진 탐색 알고리즘이 응답을 바탕으로 8개 색상 경계를 정밀하게 좁혀갑니다",
   "landing.how_step3": "측정된 나만의 색상 지도를 표준 색상과 비교하여 보여줍니다",
 
   "landing.lang.en": "English",
@@ -37,6 +37,7 @@
   "colors.orange": "주황",
   "colors.yellow": "노랑",
   "colors.green": "초록",
+  "colors.cyan": "청록",
   "colors.blue": "파랑",
   "colors.violet": "보라",
   "colors.pink": "분홍",
@@ -55,7 +56,7 @@
   "results.legend_reference": "표준 색상",
 
   "results.citation": "참고 문헌",
-  "results.refine": "정밀 측정 (+21문항)",
+  "results.refine": "정밀 측정 (+18문항)",
   "results.retake": "다시 테스트",
 
   "results.summary_avg": "평균 편차",

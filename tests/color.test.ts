@@ -97,34 +97,36 @@ describe('hslString', () => {
 })
 
 describe('COLOR_TRANSITIONS and SEARCH_RANGES', () => {
-  it('has exactly 7 transitions and 7 ranges', () => {
-    expect(COLOR_TRANSITIONS).toHaveLength(7)
-    expect(SEARCH_RANGES).toHaveLength(7)
+  it('has exactly 8 transitions and 8 ranges', () => {
+    expect(COLOR_TRANSITIONS).toHaveLength(8)
+    expect(SEARCH_RANGES).toHaveLength(8)
   })
 
   it('has correct color name pairs', () => {
     expect(COLOR_TRANSITIONS[0]).toEqual({ from: 'red', to: 'orange' })
-    expect(COLOR_TRANSITIONS[5]).toEqual({ from: 'violet', to: 'pink' })
-    expect(COLOR_TRANSITIONS[6]).toEqual({ from: 'pink', to: 'red' })
+    expect(COLOR_TRANSITIONS[3]).toEqual({ from: 'green', to: 'cyan' })
+    expect(COLOR_TRANSITIONS[4]).toEqual({ from: 'cyan', to: 'blue' })
+    expect(COLOR_TRANSITIONS[6]).toEqual({ from: 'violet', to: 'pink' })
+    expect(COLOR_TRANSITIONS[7]).toEqual({ from: 'pink', to: 'red' })
   })
 
   it('Violet→Pink range has expected bounds', () => {
-    expect(SEARCH_RANGES[5]).toEqual({ low: 280, high: 350 })
+    expect(SEARCH_RANGES[6]).toEqual({ low: 280, high: 350 })
   })
 
   it('Pink→Red range has wrap-around high bound', () => {
-    expect(SEARCH_RANGES[6]).toEqual({ low: 330, high: 390 })
+    expect(SEARCH_RANGES[7]).toEqual({ low: 330, high: 390 })
   })
 
   it('all non-wrap ranges have low < high', () => {
-    SEARCH_RANGES.slice(0, 6).forEach((r) => {
+    SEARCH_RANGES.slice(0, 7).forEach((r) => {
       expect(r.low).toBeLessThan(r.high)
     })
   })
 
   it('default boundary hue is midpoint of range with wrap normalization', () => {
     expect(getDefaultBoundaryHue(0)).toBeCloseTo(20, 5)
-    expect(getDefaultBoundaryHue(6)).toBeCloseTo(0, 5)
+    expect(getDefaultBoundaryHue(7)).toBeCloseTo(0, 5)
   })
 })
 
@@ -152,16 +154,17 @@ describe('sampleHueRange', () => {
   })
 })
 
-describe('getColorName with 7 boundaries', () => {
-  const boundaries = [20, 50, 90, 180, 270, 325, 355]
+describe('getColorName with 8 boundaries', () => {
+  const boundaries = [20, 50, 90, 150, 210, 270, 325, 355]
 
-  it('classifies all 7 color regions correctly', () => {
+  it('classifies all 8 color regions correctly', () => {
     expect(getColorName(358, boundaries)).toBe('red')
     expect(getColorName(10, boundaries)).toBe('red')
     expect(getColorName(30, boundaries)).toBe('orange')
     expect(getColorName(60, boundaries)).toBe('yellow')
     expect(getColorName(120, boundaries)).toBe('green')
-    expect(getColorName(200, boundaries)).toBe('blue')
+    expect(getColorName(170, boundaries)).toBe('cyan')
+    expect(getColorName(230, boundaries)).toBe('blue')
     expect(getColorName(280, boundaries)).toBe('violet')
     expect(getColorName(340, boundaries)).toBe('pink')
   })
@@ -170,7 +173,8 @@ describe('getColorName with 7 boundaries', () => {
     expect(getColorName(20, boundaries)).toBe('orange')
     expect(getColorName(50, boundaries)).toBe('yellow')
     expect(getColorName(90, boundaries)).toBe('green')
-    expect(getColorName(180, boundaries)).toBe('blue')
+    expect(getColorName(150, boundaries)).toBe('cyan')
+    expect(getColorName(210, boundaries)).toBe('blue')
     expect(getColorName(270, boundaries)).toBe('violet')
     expect(getColorName(325, boundaries)).toBe('pink')
     expect(getColorName(355, boundaries)).toBe('red')

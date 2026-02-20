@@ -9,9 +9,9 @@ function deviationMap(boundaries: number[]) {
 }
 
 describe('computeDeviations', () => {
-  it('returns 7 deviations in COLOR_ORDER', () => {
+  it('returns 8 deviations in COLOR_ORDER', () => {
     const deviations = computeDeviations(defaultBoundaries)
-    expect(deviations).toHaveLength(7)
+    expect(deviations).toHaveLength(8)
     expect(deviations.map(d => d.color)).toEqual(COLOR_ORDER)
   })
 
@@ -58,7 +58,7 @@ describe('computeDeviations', () => {
     expect(Math.abs(pinkDiff)).toBeLessThan(180)
   })
 
-  it('falls back to default boundary hues when input has fewer than 7 boundaries', () => {
+  it('falls back to default boundary hues when input has fewer than 8 boundaries', () => {
     const partial = [10, 60]
     const filled = COLOR_TRANSITIONS.map((_, i) => partial[i] ?? getDefaultBoundaryHue(i))
     expect(computeDeviations(partial)).toEqual(computeDeviations(filled))
@@ -66,9 +66,9 @@ describe('computeDeviations', () => {
 })
 
 describe('getColorRegions', () => {
-  it('returns 7 regions', () => {
+  it('returns 8 regions', () => {
     const regions = getColorRegions(defaultBoundaries)
-    expect(regions).toHaveLength(7)
+    expect(regions).toHaveLength(8)
   })
 
   it('regions span approximately 360° total', () => {
@@ -85,14 +85,14 @@ describe('getColorRegions', () => {
   })
 
   it('handles shifted boundaries correctly', () => {
-    const shifted = [20, 50, 80, 165, 260, 305, 340]
+    const shifted = [20, 50, 80, 145, 205, 260, 305, 340]
     const regions = getColorRegions(shifted)
     const totalSpan = regions.reduce((sum, r) => sum + r.spanDegrees, 0)
     expect(totalSpan).toBeCloseTo(360, 0)
   })
 
   it('keeps zero-width region when adjacent boundaries are equal', () => {
-    const withDuplicate = [18, 18, 78, 163, 258, 300, 345]
+    const withDuplicate = [18, 18, 78, 148, 208, 258, 300, 345]
     const regions = getColorRegions(withDuplicate)
     expect(regions[0].spanDegrees).toBeCloseTo(0, 5)
     const totalSpan = regions.reduce((sum, r) => sum + r.spanDegrees, 0)
@@ -120,7 +120,7 @@ describe('summarizeResults', () => {
   it('includes color regions', () => {
     const deviations = computeDeviations(defaultBoundaries)
     const summary = summarizeResults(deviations, defaultBoundaries)
-    expect(summary.colorRegions).toHaveLength(7)
+    expect(summary.colorRegions).toHaveLength(8)
     const totalSpan = summary.colorRegions.reduce((sum, r) => sum + r.spanDegrees, 0)
     expect(totalSpan).toBeCloseTo(360, 0)
   })

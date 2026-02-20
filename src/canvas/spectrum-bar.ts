@@ -17,7 +17,7 @@ export interface SpectrumBarOptions {
   labelReference?: string
 }
 
-const DEFAULT_COLOR_LABELS = ['Red', 'Orange', 'Yellow', 'Green', 'Blue', 'Violet', 'Pink']
+const DEFAULT_COLOR_LABELS = ['Red', 'Orange', 'Yellow', 'Green', 'Cyan', 'Blue', 'Violet', 'Pink']
 const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
 
 /**
