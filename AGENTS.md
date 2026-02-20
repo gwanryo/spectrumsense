@@ -62,10 +62,11 @@ src/
 
 - 색상: Red, Orange, Yellow, Green, Blue, Violet, Pink
 - 기준 색상(`STANDARD_COLORS`): R 0°, O 39°, Y 60°, G 120°, B 240°, V 300°, P 350°
-- 경계(7개, `BOUNDARIES.standardHue`): R→O 20°, O→Y 50°, Y→G 90°, G→B 180°, B→V 270°, V→P 325°, P→R 355°
-- 탐색 범위(`searchRange`): [0,40], [30,70], [55,120], [120,230], [220,310], [280,350], [330,390]
+- 인접 색상 전환(`COLOR_TRANSITIONS`): `COLOR_ORDER`에서 자동 생성
+- 탐색 범위(`SEARCH_RANGES`): [0,40], [30,70], [55,120], [120,230], [220,310], [280,350], [330,390]
 - P→R 탐색 상한은 `390`으로 래핑 처리
-- `binary-search.ts`, `state-machine.ts`는 `BOUNDARIES.length` 기반 동적 로직
+- `COLOR_TRANSITIONS`과 `SEARCH_RANGES`는 런타임 assertion으로 길이 동기화 보장
+- `binary-search.ts`, `state-machine.ts`는 `COLOR_TRANSITIONS.length` 기반 동적 로직
 
 ### Test reliability behavior
 
@@ -93,13 +94,13 @@ src/
 - CJK 폴백: `--font-sans`, `--font-mono`에 Noto Sans KR/JP 유지
 - 페이지별 스타일은 `injectTestStyles()`, `injectResultsStyles()`에서 동적 주입
 - 결과 액션 행은 `.actions-row` 사용 (Retake/Copy/WebShare/Download)
-- 결과 헤더는 `sessionStorage['spectrumsense-nickname']`가 있으면 닉네임 pill 표시
+- 결과 헤더는 `sessionStorage['spectrumsense-nickname']`가 있으면 타이틀에 닉네임 포함
 - 스펙트럼 레전드는 상단(user boundaries) + 하단(reference color positions, ▲ marker) 2행 구조 유지
 
 ## Critical Invariants (Do Not Break)
 
 1. i18n 키 3개 locale 완전 일치 (`tests/i18n.test.ts`)
-2. 경계 개수 관련 동적 패턴(`BOUNDARIES.length`) 유지
+2. 경계 개수 관련 동적 패턴(`COLOR_TRANSITIONS.length`) 유지
 3. URL 포맷 16 bytes 고정
 4. `vite.config.ts` base는 `/spectrumsense/` 고정
 5. runtime dependencies 추가 금지
@@ -111,9 +112,10 @@ src/
 - `color.ts/getColorName()`은 7개 영역 하드 분기라 경계 변경 시 필수 수정
 - `url-state.ts`는 바이트 오프셋 하드코딩 (14/15/16)
 - `result-card.ts` 색상명은 i18n이 아니라 내부 하드코딩
-- `computeRegionCenter()`는 단순 경계 midpoint가 아니라 기준 색상 비율 기반 보정값을 사용
-- `result.ts/getColorRegions()`에서 모듈러는 항상 `BOUNDARIES.length`
-- `results.ts`/`result-card.ts`의 사용자 색상 스와치는 `getColorRegions()` + `computeRegionCenter()` 조합으로 계산
+- `computeRegionCenter()`는 사용자 경계 span의 순수 기하학적 중점 (기준 색상 가중치 미사용)
+- `result.ts/getColorRegions()`에서 모듈러는 항상 `COLOR_TRANSITIONS.length`
+- `results.ts`/`result-card.ts`의 사용자 색상 스와치는 `getColorRegions()` + `sampleHueRange()` 그라데이션으로 렌더링
+- `huePositionInRange()`는 `color.ts`에서 공유 — `results.ts`와 `result-card.ts` 모두 import
 - `spectrum-bar.ts`와 `result-card.ts`의 reference marker(하단 ▲ + 라벨) 시각 언어는 함께 유지
 - i18n 키 중 `landing.*` 일부는 실제로 `test.ts` 환경 체크에서 사용됨
 

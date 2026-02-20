@@ -4,7 +4,11 @@ import {
   normalizeHue,
   circularDistance,
   hslString,
-  BOUNDARIES,
+  COLOR_TRANSITIONS,
+  SEARCH_RANGES,
+  getDefaultBoundaryHue,
+  computeRegionCenter,
+  sampleHueRange,
   getColorName,
 } from '../src/color'
 
@@ -31,11 +35,8 @@ describe('normalizeHue', () => {
 describe('circularMidpoint', () => {
   it('CRITICAL: handles Violet→Red wrap-around (345° and 18°)', () => {
     const mid = circularMidpoint(345, 18)
-    // Should be ~1.5°, NOT 181.5° (the naive average)
-    // Accept range: 359° to 3° (wrapping around 0°)
     const isNearZero = mid >= 359 || mid <= 3
     expect(isNearZero).toBe(true)
-    // Definitely NOT in the green/blue range
     expect(mid).not.toBeGreaterThan(90)
   })
 
@@ -45,14 +46,11 @@ describe('circularMidpoint', () => {
 
   it('handles near-boundary case (350° and 10°)', () => {
     const mid = circularMidpoint(350, 10)
-    // Should be ~0°, wrapping around
     const isNearZero = mid >= 355 || mid <= 5
     expect(isNearZero).toBe(true)
   })
 
   it('handles symmetric case (90° and 270°)', () => {
-    // 90° and 270° are opposite — midpoint could be 0° or 180°
-    // Both are valid circular midpoints; just verify it's one of them
     const mid = circularMidpoint(90, 270)
     const isValid = Math.abs(mid - 0) < 5 || Math.abs(mid - 180) < 5 || mid > 355 || mid < 5
     expect(isValid).toBe(true)
@@ -75,7 +73,6 @@ describe('circularDistance', () => {
   })
 
   it('handles wrap-around correctly', () => {
-    // From 355° to 5° = +10° (clockwise), not -350°
     expect(circularDistance(355, 5)).toBeCloseTo(10, 0)
   })
 
@@ -99,43 +96,64 @@ describe('hslString', () => {
   })
 })
 
-describe('BOUNDARIES', () => {
-  it('has exactly 7 boundaries', () => {
-    expect(BOUNDARIES).toHaveLength(7)
-  })
-
-  it('has correct standard hues', () => {
-    const hues = BOUNDARIES.map(b => b.standardHue)
-    expect(hues).toEqual([20, 50, 90, 180, 270, 325, 355])
+describe('COLOR_TRANSITIONS and SEARCH_RANGES', () => {
+  it('has exactly 7 transitions and 7 ranges', () => {
+    expect(COLOR_TRANSITIONS).toHaveLength(7)
+    expect(SEARCH_RANGES).toHaveLength(7)
   })
 
   it('has correct color name pairs', () => {
-    expect(BOUNDARIES[0]).toMatchObject({ from: 'red', to: 'orange' })
-    expect(BOUNDARIES[5]).toMatchObject({ from: 'violet', to: 'pink' })
-    expect(BOUNDARIES[6]).toMatchObject({ from: 'pink', to: 'red' })
+    expect(COLOR_TRANSITIONS[0]).toEqual({ from: 'red', to: 'orange' })
+    expect(COLOR_TRANSITIONS[5]).toEqual({ from: 'violet', to: 'pink' })
+    expect(COLOR_TRANSITIONS[6]).toEqual({ from: 'pink', to: 'red' })
   })
 
-  it('Violet→Pink boundary has expected range', () => {
-    const vp = BOUNDARIES[5]
-    expect(vp.searchRange.low).toBe(280)
-    expect(vp.searchRange.high).toBe(350)
+  it('Violet→Pink range has expected bounds', () => {
+    expect(SEARCH_RANGES[5]).toEqual({ low: 280, high: 350 })
   })
 
-  it('Pink→Red boundary has wrap-around range', () => {
-    const pr = BOUNDARIES[6]
-    expect(pr.searchRange.low).toBe(330)
-    expect(pr.searchRange.high).toBe(390)
+  it('Pink→Red range has wrap-around high bound', () => {
+    expect(SEARCH_RANGES[6]).toEqual({ low: 330, high: 390 })
   })
 
-  it('all non-wrap boundaries have low < high', () => {
-    BOUNDARIES.slice(0, 6).forEach(b => {
-      expect(b.searchRange.low).toBeLessThan(b.searchRange.high)
+  it('all non-wrap ranges have low < high', () => {
+    SEARCH_RANGES.slice(0, 6).forEach((r) => {
+      expect(r.low).toBeLessThan(r.high)
     })
+  })
+
+  it('default boundary hue is midpoint of range with wrap normalization', () => {
+    expect(getDefaultBoundaryHue(0)).toBeCloseTo(20, 5)
+    expect(getDefaultBoundaryHue(6)).toBeCloseTo(0, 5)
+  })
+})
+
+describe('computeRegionCenter', () => {
+  it('returns arithmetic midpoint for non-wrap span', () => {
+    expect(computeRegionCenter(100, 140)).toBeCloseTo(120, 5)
+  })
+
+  it('returns wrapped midpoint for cross-zero span', () => {
+    expect(computeRegionCenter(350, 10)).toBeCloseTo(0, 5)
+  })
+})
+
+describe('sampleHueRange', () => {
+  it('returns evenly spaced stops for non-wrap ranges', () => {
+    expect(sampleHueRange(100, 140, 5)).toEqual([100, 110, 120, 130, 140])
+  })
+
+  it('handles wrap-around ranges in clockwise direction', () => {
+    expect(sampleHueRange(350, 10, 5)).toEqual([350, 355, 0, 5, 10])
+  })
+
+  it('returns duplicated stop for zero-span ranges', () => {
+    expect(sampleHueRange(120, 120, 5)).toEqual([120, 120])
   })
 })
 
 describe('getColorName with 7 boundaries', () => {
-  const boundaries = BOUNDARIES.map(b => b.standardHue)
+  const boundaries = [20, 50, 90, 180, 270, 325, 355]
 
   it('classifies all 7 color regions correctly', () => {
     expect(getColorName(358, boundaries)).toBe('red')

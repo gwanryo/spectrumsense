@@ -1,4 +1,4 @@
-import type { Boundary, ColorName } from './types'
+import type { ColorTransition, ColorName, SearchRange } from './types'
 
 // ── Standard Color Hues (single source of truth) ──
 // Reference: https://html-color.codes/
@@ -25,19 +25,30 @@ export function getColorHsl(color: ColorName): string {
   return `hsl(${hue}, ${s}%, ${l}%)`
 }
 
-// ── Standard Color Boundaries ──
-// standardHue = midpoint of adjacent STANDARD_COLORS
-// searchRange covers plausible human variation around each boundary
-export const BOUNDARIES: Boundary[] = [
-  { from: 'red',    to: 'orange', standardHue: 20,  searchRange: { low: 0,   high: 40  } },
-  { from: 'orange', to: 'yellow', standardHue: 50,  searchRange: { low: 30,  high: 70  } },
-  { from: 'yellow', to: 'green',  standardHue: 90,  searchRange: { low: 55,  high: 120 } },
-  { from: 'green',  to: 'blue',   standardHue: 180, searchRange: { low: 120, high: 230 } },
-  { from: 'blue',   to: 'violet', standardHue: 270, searchRange: { low: 220, high: 310 } },
-  { from: 'violet', to: 'pink',   standardHue: 325, searchRange: { low: 280, high: 350 } },
-  { from: 'pink',   to: 'red',    standardHue: 355, searchRange: { low: 330, high: 390 } },
+// Adjacent color-pair transitions on the hue wheel.
+export const COLOR_TRANSITIONS: ColorTransition[] = COLOR_ORDER.map((from, i) => ({
+  from,
+  to: COLOR_ORDER[(i + 1) % COLOR_ORDER.length],
+}))
+
+// Per-transition binary-search ranges.
+// Length MUST equal COLOR_TRANSITIONS.length — see assertion below.
+export const SEARCH_RANGES: SearchRange[] = [
+  { low: 0, high: 40 },
+  { low: 30, high: 70 },
+  { low: 55, high: 120 },
+  { low: 120, high: 230 },
+  { low: 220, high: 310 },
+  { low: 280, high: 350 },
+  { low: 330, high: 390 },
   // Note: 390 = 360 + 30, representing wrap-around to 30° past 0°
 ]
+
+if (COLOR_TRANSITIONS.length !== SEARCH_RANGES.length) {
+  throw new Error(
+    `COLOR_TRANSITIONS (${COLOR_TRANSITIONS.length}) and SEARCH_RANGES (${SEARCH_RANGES.length}) must have the same length`
+  )
+}
 
 // ── Circular Math ──
 
@@ -110,27 +121,36 @@ export function clockwiseSpan(a: number, b: number): number {
   return diff < 0 ? diff + 360 : diff
 }
 
-/**
- * Region center via standard-color proportional offset.
- * NOT the boundary midpoint — boundaries are asymmetric around
- * each standard color (e.g. Green=120° but midpoint(90°,180°)=135°).
- */
-export function computeRegionCenter(
-  regionIndex: number,
-  userStart: number,
-  userEnd: number,
-): number {
-  const n = BOUNDARIES.length
-  const stdStart = BOUNDARIES[regionIndex].standardHue
-  const stdEnd = BOUNDARIES[(regionIndex + 1) % n].standardHue
-  const colorName = BOUNDARIES[regionIndex].to
-  const stdCenter = STANDARD_COLORS[colorName]
-
-  const stdSpan = clockwiseSpan(stdStart, stdEnd)
-  const ratio = stdSpan > 0
-    ? clockwiseSpan(stdStart, stdCenter) / stdSpan
-    : 0.5
-
+/** Region center as the circular midpoint of a user color span. */
+export function computeRegionCenter(userStart: number, userEnd: number): number {
   const userSpan = clockwiseSpan(userStart, userEnd)
-  return normalizeHue(userStart + ratio * userSpan)
+  return normalizeHue(userStart + userSpan / 2)
+}
+
+/**
+ * Sample evenly spaced hue stops over a clockwise span.
+ * Useful for rendering user-region gradients (start → end).
+ */
+export function sampleHueRange(userStart: number, userEnd: number, steps: number = 7): number[] {
+  const safeSteps = Math.max(2, Math.floor(steps))
+  const span = clockwiseSpan(userStart, userEnd)
+  if (span === 0) { const h = normalizeHue(userStart); return [h, h] }
+
+  return Array.from({ length: safeSteps }, (_, i) =>
+    normalizeHue(userStart + (span * i) / (safeSteps - 1))
+  )
+}
+
+/** Default boundary hue used when boundary data is missing. */
+export function getDefaultBoundaryHue(boundaryIndex: number): number {
+  const range = SEARCH_RANGES[boundaryIndex]
+  if (!range) return 0
+  return normalizeHue((range.low + range.high) / 2)
+}
+
+export function huePositionInRange(targetHue: number, startHue: number, endHue: number): number | null {
+  const span = clockwiseSpan(startHue, endHue)
+  if (span <= 0) return null
+  const offset = clockwiseSpan(startHue, targetHue)
+  return offset < span ? offset / span : null
 }

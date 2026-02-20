@@ -1,16 +1,17 @@
 import type { Deviation, ColorRegion, ResultSummary } from './types'
 import {
-  BOUNDARIES,
+  COLOR_TRANSITIONS,
   COLOR_ORDER,
   STANDARD_COLORS,
   circularDistance,
   normalizeHue,
+  getDefaultBoundaryHue,
   computeRegionCenter,
 } from './color'
 
 export function computeDeviations(userBoundaries: number[]): Deviation[] {
-  const normalizedBoundaries = BOUNDARIES.map((boundary, i) =>
-    normalizeHue(userBoundaries[i] ?? boundary.standardHue)
+  const normalizedBoundaries = COLOR_TRANSITIONS.map((_, i) =>
+    normalizeHue(userBoundaries[i] ?? getDefaultBoundaryHue(i))
   )
   const regions = getColorRegions(normalizedBoundaries)
   const regionByColor = new Map(regions.map((region, i) => [region.name, i]))
@@ -22,14 +23,14 @@ export function computeDeviations(userBoundaries: number[]): Deviation[] {
     }
 
     const region = regions[regionIndex]
-    const userHue = computeRegionCenter(regionIndex, region.startHue, region.endHue)
-    const standardHue = STANDARD_COLORS[color]
-    const difference = circularDistance(standardHue, userHue)
+    const userHue = computeRegionCenter(region.startHue, region.endHue)
+    const referenceHue = STANDARD_COLORS[color]
+    const difference = circularDistance(referenceHue, userHue)
 
     return {
       color,
       userHue,
-      standardHue,
+      referenceHue,
       difference,
     }
   })
@@ -41,20 +42,22 @@ export function computeDeviations(userBoundaries: number[]): Deviation[] {
  * The regions collectively span 360°.
  */
 export function getColorRegions(userBoundaries: number[]): ColorRegion[] {
-  const normalized = userBoundaries.map(normalizeHue)
+  const normalized = COLOR_TRANSITIONS.map((_, i) =>
+    normalizeHue(userBoundaries[i] ?? getDefaultBoundaryHue(i))
+  )
   const regions: ColorRegion[] = []
 
-  for (let i = 0; i < BOUNDARIES.length; i++) {
-    const boundary = BOUNDARIES[i]
+  for (let i = 0; i < COLOR_TRANSITIONS.length; i++) {
+    const transition = COLOR_TRANSITIONS[i]
     const startHue = normalized[i]
-    const endHue = normalized[(i + 1) % BOUNDARIES.length]
+    const endHue = normalized[(i + 1) % COLOR_TRANSITIONS.length]
 
     // Compute span (handle wrap-around)
     let span = endHue - startHue
     if (span < 0) span += 360
 
     regions.push({
-      name: boundary.to, // The color that starts at this boundary
+      name: transition.to, // The color that starts at this boundary
       startHue,
       endHue,
       spanDegrees: span,

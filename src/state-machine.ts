@@ -13,7 +13,7 @@ import {
   isComplete,
   recordChoice,
 } from './binary-search'
-import { BOUNDARIES } from './color'
+import { COLOR_TRANSITIONS, SEARCH_RANGES } from './color'
 
 const NORMAL_STEPS = 6
 const REFINE_STEPS = 3
@@ -49,12 +49,12 @@ export function createTestSession(
   void locale
   const maxSteps = mode === 'refine' ? REFINE_STEPS : NORMAL_STEPS
 
-  const boundaries = BOUNDARIES.map((boundary, i) => {
+  const boundaries = COLOR_TRANSITIONS.map((transition, i) => {
     const prevHue = previousResults?.boundaries[i]
-    return initBinarySearch(boundary, maxSteps, prevHue)
+    return initBinarySearch(transition, SEARCH_RANGES[i], maxSteps, prevHue)
   })
 
-  const indices = Array.from({ length: BOUNDARIES.length }, (_, i) => i)
+  const indices = Array.from({ length: COLOR_TRANSITIONS.length }, (_, i) => i)
   const boundaryOrder = shuffleArray(indices)
 
   return {
@@ -82,9 +82,9 @@ export function createTestSession(
 export function getCurrentQuestion(state: TestState): Question {
   if (state.phase === 'catch_trial' && state.activeCatchTrial) {
     const ct = state.activeCatchTrial
-    const boundary = BOUNDARIES[ct.boundaryIndex]
-    const fromLabel = `colors.${boundary.from}`
-    const toLabel = `colors.${boundary.to}`
+    const transition = COLOR_TRANSITIONS[ct.boundaryIndex]
+    const fromLabel = `colors.${transition.from}`
+    const toLabel = `colors.${transition.to}`
 
     return {
       hue: ct.hue,
@@ -98,10 +98,10 @@ export function getCurrentQuestion(state: TestState): Question {
   }
 
   const boundaryState = state.boundaries[state.currentBoundaryIndex]
-  const boundary = boundaryState.boundary
+  const transition = boundaryState.transition
   const hue = getNextHue(boundaryState)
-  const fromLabel = `colors.${boundary.from}`
-  const toLabel = `colors.${boundary.to}`
+  const fromLabel = `colors.${transition.from}`
+  const toLabel = `colors.${transition.to}`
 
   return {
     hue,

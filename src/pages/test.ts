@@ -400,7 +400,7 @@ function injectTestStyles(): void {
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: var(--radius-sm, 8px);
-      color: rgba(255, 255, 255, 0.4);
+      color: rgba(255, 255, 255, 0.5);
       font-family: var(--font-sans, 'Outfit', sans-serif);
       font-size: 0.8125rem;
       font-weight: 400;
@@ -410,9 +410,9 @@ function injectTestStyles(): void {
     }
 
     .test-back-btn:hover {
-      color: rgba(255, 255, 255, 0.7);
+      color: rgba(255, 255, 255, 0.8);
       background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.18);
     }
 
     .test-env-check {
@@ -420,7 +420,7 @@ function injectTestStyles(): void {
       flex-direction: column;
       align-items: center;
       justify-content: safe center;
-      gap: 2rem;
+      gap: 1.75rem;
       padding: 3.5rem 2rem 2rem;
       text-align: center;
       width: 100%;
@@ -445,7 +445,7 @@ function injectTestStyles(): void {
       display: flex;
       flex-direction: column;
       gap: 0.625rem;
-      color: rgba(255, 255, 255, 0.65);
+      color: rgba(255, 255, 255, 0.75);
       font-size: 1rem;
       font-weight: 300;
       line-height: 1.6;
@@ -461,7 +461,7 @@ function injectTestStyles(): void {
 
     .test-env-list li::before {
       content: '→';
-      color: rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.35);
       flex-shrink: 0;
     }
 
@@ -483,7 +483,7 @@ function injectTestStyles(): void {
       font-family: var(--font-sans, 'Outfit', sans-serif);
       font-size: 0.75rem;
       font-weight: 600;
-      color: rgba(255, 255, 255, 0.35);
+      color: rgba(255, 255, 255, 0.5);
       text-transform: uppercase;
       letter-spacing: 0.08em;
       margin: 0;
@@ -497,7 +497,7 @@ function injectTestStyles(): void {
       display: flex;
       flex-direction: column;
       gap: 0.375rem;
-      color: rgba(255, 255, 255, 0.5);
+      color: rgba(255, 255, 255, 0.6);
       font-size: 0.875rem;
       font-weight: 300;
       line-height: 1.6;
@@ -512,7 +512,7 @@ function injectTestStyles(): void {
 
     .test-env-how-steps li::before {
       content: counter(how-step) '.';
-      color: rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.35);
       font-family: var(--font-mono, 'JetBrains Mono', monospace);
       font-size: 0.75rem;
       flex-shrink: 0;
@@ -541,7 +541,7 @@ function injectTestStyles(): void {
       font-family: var(--font-sans, 'Outfit', sans-serif);
       font-size: 0.75rem;
       font-weight: 600;
-      color: rgba(255, 255, 255, 0.35);
+      color: rgba(255, 255, 255, 0.5);
       text-transform: uppercase;
       letter-spacing: 0.08em;
     }
@@ -563,7 +563,7 @@ function injectTestStyles(): void {
     }
 
     .test-env-nickname-input::placeholder {
-      color: rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.3);
     }
 
     .test-env-nickname-input:focus {
@@ -574,7 +574,7 @@ function injectTestStyles(): void {
 
     .test-env-disclaimer {
       font-size: 0.8125rem;
-      color: rgba(255, 255, 255, 0.3);
+      color: rgba(255, 255, 255, 0.45);
       line-height: 1.7;
       max-width: 440px;
       text-align: center;
@@ -765,8 +765,35 @@ function injectTestStyles(): void {
     }
 
     @media (max-width: 480px) {
+      .test-env-check {
+        gap: 1.25rem;
+        padding: 3rem 1.25rem 1.5rem;
+        justify-content: flex-start;
+      }
+      .test-env-title {
+        font-size: 1.625rem;
+      }
+      .test-env-list {
+        font-size: 0.9375rem;
+        gap: 0.5rem;
+      }
+      .test-env-divider {
+        margin: 0;
+      }
+      .test-env-how-steps {
+        font-size: 0.8125rem;
+      }
+      .test-env-disclaimer {
+        font-size: 0.75rem;
+        padding: 0.625rem 1rem;
+        line-height: 1.6;
+      }
       .test-env-details {
         grid-template-columns: 1fr;
+      }
+      .test-confirmation-btn {
+        padding: 0.875rem 1.5rem;
+        font-size: 0.9375rem;
       }
     }
 

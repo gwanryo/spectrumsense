@@ -8,7 +8,7 @@
   "landing.how_title": "テストの流れ",
   "landing.how_step1": "表示された色が隣接する2つの色名のどちらに近いかを選びます",
   "landing.how_step2": "二分探索アルゴリズムが回答をもとに7つの色の境界を精密に絞り込みます",
-  "landing.how_step3": "測定されたあなただけの色地図を基準境界値と比較します",
+  "landing.how_step3": "測定されたあなただけの色地図を基準色と比較します",
 
   "landing.lang.en": "English",
   "landing.lang.ko": "한국어",
@@ -42,13 +42,17 @@
   "colors.pink": "ピンク",
 
   "results.title": "あなたの色覚境界",
-  "results.subtitle": "基準境界との比較",
+  "results.title_with_nickname": "{nickname}の色覚境界",
+  "results.subtitle": "基準色とあなたの色覚境界の比較",
 
-  "results.typical_value": "基準値",
+  "results.typical_value": "基準色",
+  "results.reference_short": "基準",
   "results.measured_value": "中央値",
-  "results.your_color": "あなたの{color}",
+  "results.your_color": "{color}",
+  "results.out_of_range": "範囲外",
+  "results.reference_out_of_range": "範囲外",
   "results.legend_user": "あなたの色覚境界",
-  "results.legend_reference": "基準色の位置",
+  "results.legend_reference": "基準色",
 
   "results.citation": "参考文献",
   "results.refine": "精密測定（+21問）",

@@ -8,7 +8,7 @@
   "landing.how_title": "How It Works",
   "landing.how_step1": "You see a color and choose which of two adjacent color names it's closer to",
   "landing.how_step2": "Your answers drive a binary search that narrows in on each of the 7 color boundaries",
-  "landing.how_step3": "Your personal color map is compared against reference boundary values",
+  "landing.how_step3": "Your personal color map is compared against reference colors",
 
   "landing.lang.en": "English",
   "landing.lang.ko": "한국어",
@@ -42,13 +42,17 @@
   "colors.pink": "Pink",
 
   "results.title": "Your Color Boundaries",
-  "results.subtitle": "How your perception compares to reference boundaries",
+  "results.title_with_nickname": "{nickname}'s Color Boundaries",
+  "results.subtitle": "How your color boundaries compare to reference colors",
 
-  "results.typical_value": "Reference",
+  "results.typical_value": "Reference Color",
+  "results.reference_short": "Reference",
   "results.measured_value": "Your Value",
-  "results.your_color": "Your {color}",
+  "results.your_color": "{color}",
+  "results.out_of_range": "Out of range",
+  "results.reference_out_of_range": "Out of range",
   "results.legend_user": "Your color boundaries",
-  "results.legend_reference": "Reference color positions",
+  "results.legend_reference": "Reference colors",
 
   "results.citation": "References",
   "results.refine": "Refine (+21 questions)",

@@ -1,4 +1,12 @@
-import { BOUNDARIES, normalizeHue, clockwiseSpan, COLOR_ORDER, STANDARD_COLORS } from '../color'
+import {
+  COLOR_ORDER,
+  COLOR_TRANSITIONS,
+  STANDARD_COLORS,
+  computeRegionCenter,
+  getDefaultBoundaryHue,
+  normalizeHue,
+  clockwiseSpan,
+} from '../color'
 import type { ColorName } from '../types'
 import { getColorRegions } from '../result'
 
@@ -41,36 +49,36 @@ export function renderSpectrumBar(
 
   // Layout — give more room on narrow screens for staggered labels
   const isNarrow = W < 500
-  const rowLabelY = 2             // "당신의 색 경계"
-  const barY = 20
+  const rowLabelY = 0             // "당신의 색 경계"
+  const barY = 40
   const belowBarSpace = isNarrow ? 62 : 52 // extra space for staggered labels
   const barH = H - barY - belowBarSpace
-  const hueScaleY = barY + barH + 2
-  const refArrowY = hueScaleY + 12   // ▲ arrows below hue scale
-  const refLabelY = refArrowY + 8    // color name labels
+  const hueScaleY = barY - (isNarrow ? 12 : 14)
+  const refArrowY = barY + barH + (isNarrow ? 2 : 3)  // ▲ arrows below bar
+  const refLabelY = refArrowY + 12   // color name labels
   const refRowLabelY = refLabelY + (isNarrow ? 26 : 16) // "기준 색 위치"
 
   // 1. Row label
-  ctx.font = `500 13px ${FONT}`
+  ctx.font = `500 14px ${FONT}`
   ctx.textAlign = 'left'
-  ctx.textBaseline = 'middle'
-  ctx.fillStyle = '#8e8da6'
-  ctx.fillText(labelUser, 2, rowLabelY + 6)
+  ctx.textBaseline = 'top'
+  ctx.fillStyle = '#a09eb8'
+  ctx.fillText(labelUser, 2, rowLabelY)
 
   // 2. User bar
   drawColorBar(ctx, userBoundaries, 0, barY, W, barH, colorLabels)
 
   // 3. 0°..360° scale for the user boundary row
-  drawHueScale(ctx, 0, barY, W, barH, hueScaleY)
+  drawHueScale(ctx, 0, barY, W, hueScaleY)
 
   // 4. Reference markers below bar (standard color positions)
   drawReferenceMarkers(ctx, W, refLabelY, refArrowY, colorLabels)
 
   // 5. Reference row label
-  ctx.font = `500 13px ${FONT}`
+  ctx.font = `500 14px ${FONT}`
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
-  ctx.fillStyle = '#8e8da6'
+  ctx.fillStyle = '#a09eb8'
   ctx.fillText(labelReference, W / 2, refRowLabelY)
 }
 
@@ -79,24 +87,23 @@ export function renderSpectrumBar(
 function drawHueScale(
   ctx: CanvasRenderingContext2D,
   x: number,
-  y: number,
+  barY: number,
   w: number,
-  h: number,
   labelY: number,
 ): void {
   const isNarrow = w < 500
   const ticks = isNarrow ? [0, 90, 180, 270, 360] : [0, 60, 120, 180, 240, 300, 360]
-  const tickTop = y + h
-  const tickBottom = tickTop + 3
+  const tickTop = barY - 3
+  const tickBottom = barY
   const minInset = isNarrow ? 11 : 14
 
-  ctx.strokeStyle = '#6b6a85'
+  ctx.strokeStyle = '#807e99'
   ctx.lineWidth = 1
 
-  ctx.font = `500 ${isNarrow ? 9 : 10}px ${FONT}`
+  ctx.font = `500 ${isNarrow ? 10 : 11}px ${FONT}`
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
-  ctx.fillStyle = '#6b6a85'
+  ctx.fillStyle = '#807e99'
 
   for (const tick of ticks) {
     const px = x + (tick / 360) * w
@@ -123,7 +130,7 @@ function drawReferenceMarkers(
   const isNarrow = barW < 500
   const arrowSize = isNarrow ? 3 : 4
   const minInset = isNarrow ? 10 : 14
-  const fontSize = isNarrow ? 9 : 11
+  const fontSize = isNarrow ? 10 : 12
 
   for (let i = 0; i < COLOR_ORDER.length; i++) {
     const color = COLOR_ORDER[i] as ColorName
@@ -134,18 +141,18 @@ function drawReferenceMarkers(
     const clampedX = Math.max(minInset, Math.min(barW - minInset, cx))
 
     // Stagger labels on narrow screens to avoid overlap
-    const staggerOffset = isNarrow && i % 2 === 1 ? 11 : 0
+    const staggerOffset = isNarrow && i % 2 === 1 ? 12 : 0
 
     // Color name label
     ctx.font = `500 ${fontSize}px ${FONT}`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'top'
-    ctx.fillStyle = '#6b6a85' // --text-muted
+    ctx.fillStyle = '#807e99'
     const label = labels[i] ?? DEFAULT_COLOR_LABELS[i]
     ctx.fillText(label, clampedX, labelY + staggerOffset)
 
     // ▲ arrow (pointing up toward the bar)
-    ctx.fillStyle = '#6b6a85'
+    ctx.fillStyle = '#807e99'
     ctx.beginPath()
     ctx.moveTo(cx, arrowY)
     ctx.lineTo(cx - arrowSize, arrowY + arrowSize + 1)
@@ -200,8 +207,18 @@ function drawColorBar(
   // 3. Boundary lines
   for (const b of boundaries.map(normalizeHue)) {
     const bx = x + (b / 360) * w
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.60)'
-    ctx.lineWidth = 1.5
+
+    // Outer dark stroke keeps contrast on bright hues (yellow/green/cyan).
+    ctx.strokeStyle = 'rgba(12, 14, 24, 0.52)'
+    ctx.lineWidth = 2.8
+    ctx.beginPath()
+    ctx.moveTo(bx, y)
+    ctx.lineTo(bx, y + h)
+    ctx.stroke()
+
+    // Inner bright stroke gives a crisp boundary center.
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.86)'
+    ctx.lineWidth = 1.4
     ctx.beginPath()
     ctx.moveTo(bx, y)
     ctx.lineTo(bx, y + h)
@@ -212,7 +229,7 @@ function drawColorBar(
 
   // 4. Labels at region centers with dark pill backdrop
   const isNarrowBar = w < 500
-  const labelFontSize = isNarrowBar ? 10 : 12
+  const labelFontSize = isNarrowBar ? 11 : 13
   ctx.font = `500 ${labelFontSize}px ${FONT}`
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
@@ -228,7 +245,7 @@ function drawColorBar(
     const label = labels[colorIdx] ?? DEFAULT_COLOR_LABELS[colorIdx]
 
     const span = clockwiseSpan(region.startHue, region.endHue)
-    const midHue = normalizeHue(region.startHue + span / 2)
+    const midHue = computeRegionCenter(region.startHue, region.endHue)
     const midX = x + (midHue / 360) * w
     const segW = (span / 360) * w
 
@@ -252,20 +269,20 @@ function drawColorBar(
 
 /**
  * Compute deviation display data for the spectrum bar.
- * Returns pixel offset for each user boundary relative to standard.
+ * Returns pixel offset for each user boundary relative to default search midpoint.
  */
 export function computeMarkerOffsets(
   userBoundaries: number[],
   canvasWidth: number
-): { userX: number; standardX: number; degreeDiff: number }[] {
-  return BOUNDARIES.map((boundary, i) => {
-    const userHue = normalizeHue(userBoundaries[i] ?? boundary.standardHue)
-    const standardHue = boundary.standardHue
+): { userX: number; referenceX: number; degreeDiff: number }[] {
+  return COLOR_TRANSITIONS.map((_, i) => {
+    const userHue = normalizeHue(userBoundaries[i] ?? getDefaultBoundaryHue(i))
+    const referenceHue = getDefaultBoundaryHue(i)
     const userX = (userHue / 360) * canvasWidth
-    const standardX = (standardHue / 360) * canvasWidth
-    let degreeDiff = userHue - standardHue
+    const referenceX = (referenceHue / 360) * canvasWidth
+    let degreeDiff = userHue - referenceHue
     if (degreeDiff > 180) degreeDiff -= 360
     if (degreeDiff < -180) degreeDiff += 360
-    return { userX, standardX, degreeDiff }
+    return { userX, referenceX, degreeDiff }
   })
 }

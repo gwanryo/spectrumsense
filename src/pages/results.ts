@@ -1,7 +1,7 @@
 import type { TestResult } from '../types'
 import { readResultFromUrl, buildShareUrl } from '../url-state'
 import { computeDeviations, summarizeResults } from '../result'
-import { getColorHsl, computeRegionCenter } from '../color'
+import { sampleHueRange, huePositionInRange, getColorHsl } from '../color'
 import { getColorRegions } from '../result'
 import { renderSpectrumBar } from '../canvas/spectrum-bar'
 import { generateResultCard, downloadResultCard } from '../canvas/result-card'
@@ -19,12 +19,16 @@ export function renderResults(container: HTMLElement): void {
   const deviations = computeDeviations(result.boundaries)
   const summary = summarizeResults(deviations, result.boundaries)
 
-  const nickname = sessionStorage.getItem('spectrumsense-nickname') ?? ''
+  const nickname = (sessionStorage.getItem('spectrumsense-nickname') ?? '').trim()
+  const title = nickname
+    ? t('results.title_with_nickname').replace('{nickname}', escapeHtml(nickname))
+    : t('results.title')
 
   const madValue = Math.round(summary.meanAbsoluteDeviation * 10) / 10
   const mostShiftedColor = t(`colors.${summary.mostShifted.color}`)
   const mostShiftedDiff = Math.round(summary.mostShifted.difference)
   const mostShiftedStr = mostShiftedDiff > 0 ? `+${mostShiftedDiff}°` : `${mostShiftedDiff}°`
+  const mostShiftedColorHsl = getColorHsl(summary.mostShifted.color)
 
   container.innerHTML = `
     <div class="results-page">
@@ -32,10 +36,9 @@ export function renderResults(container: HTMLElement): void {
         <div class="container">
           <div class="results-heading-row">
             <div class="results-heading-copy">
-              <h1 class="results-title">${t('results.title')}</h1>
+              <h1 class="results-title">${title}</h1>
               <p class="results-subtitle">${t('results.subtitle')}</p>
             </div>
-            ${nickname ? `<p class="results-nickname">${nickname}</p>` : ''}
           </div>
         </div>
       </header>
@@ -44,7 +47,7 @@ export function renderResults(container: HTMLElement): void {
         <div class="container">
 
           <!-- Spectrum Bar -->
-          <section class="results-section">
+          <section class="results-section results-section--spectrum">
             <canvas id="spectrum-bar-canvas" class="spectrum-bar-canvas"></canvas>
           </section>
 
@@ -55,7 +58,10 @@ export function renderResults(container: HTMLElement): void {
               <span class="summary-stat-label">${t('results.summary_avg')}</span>
             </div>
             <div class="summary-stat">
-              <span class="summary-stat-value">${mostShiftedColor} ${mostShiftedStr}</span>
+              <span class="summary-stat-value">
+                <span class="summary-shift-color" style="color: ${mostShiftedColorHsl}">${mostShiftedColor}</span>
+                <span class="summary-shift-diff">${mostShiftedStr}</span>
+              </span>
               <span class="summary-stat-label">${t('results.summary_most_shifted')}</span>
             </div>
           </section>
@@ -68,7 +74,7 @@ export function renderResults(container: HTMLElement): void {
            <!-- Action Buttons -->
           <section class="results-actions">
             <div class="actions-row">
-              <button class="btn-secondary" id="btn-retake">${t('results.retake')}</button>
+              <button class="btn-primary" id="btn-retake">${t('results.retake')}</button>
               <button class="btn-secondary" id="btn-copy">${t('results.copy_link')}</button>
               ${isWebShareSupported() ? `<button class="btn-secondary" id="btn-webshare">${t('results.web_share')}</button>` : ''}
               <button class="btn-secondary" id="btn-download">${t('results.download')}</button>
@@ -131,31 +137,41 @@ function renderDeviationGrid(
 
     const colorKey = `colors.${dev.color}`
     const colorName = t(colorKey)
-    const standardHsl = getColorHsl(dev.color)
     const userHue = Math.round(dev.userHue)
 
     const regionIdx = regionByColor.get(dev.color)!
     const region = regions[regionIdx]
-    const userCenterHue = computeRegionCenter(regionIdx, region.startHue, region.endHue)
-    const userColorHsl = `hsl(${Math.round(userCenterHue)}, 100%, 50%)`
+    const userRangeGradient = buildHueRangeGradient(region.startHue, region.endHue)
     const yourColorLabel = t('results.your_color').replace('{color}', colorName)
+    const referencePosition = huePositionInRange(dev.referenceHue, region.startHue, region.endHue)
+    const referencePositionPct = referencePosition === null
+      ? null
+      : Math.max(0, Math.min(100, referencePosition * 100))
+    const isReferenceInRange = referencePositionPct !== null
 
     return `
       <div class="deviation-card card" style="animation-delay: ${i * 0.08}s">
-        <div class="deviation-color-compare">
-          <div class="deviation-color-item">
-            <span class="deviation-swatch-lg" style="background: ${standardHsl}"></span>
-            <span class="deviation-color-label">${colorName}</span>
-          </div>
-          <div class="deviation-color-item">
-            <span class="deviation-swatch-lg" style="background: ${userColorHsl}"></span>
+        <div class="deviation-user-color">
+          <div class="deviation-user-color-top">
             <span class="deviation-color-label">${yourColorLabel}</span>
+            ${isReferenceInRange ? '' : `<span class="deviation-out-of-range-inline">${t('results.reference_out_of_range')}</span>`}
+          </div>
+          <div class="deviation-user-swatch-wrap">
+            <div class="deviation-user-swatch" style="background: ${userRangeGradient}"></div>
+            ${isReferenceInRange
+              ? `<span class="deviation-reference-marker-wrap" style="left: ${referencePositionPct.toFixed(2)}%">
+                   <span class="deviation-reference-triangle deviation-reference-triangle--top"></span>
+                   <span class="deviation-reference-inside-label">${t('results.reference_short')}</span>
+                   <span class="deviation-reference-triangle deviation-reference-triangle--bottom"></span>
+                 </span>`
+              : ''
+            }
           </div>
         </div>
         <div class="deviation-values">
           <div class="deviation-value">
             <span class="deviation-label">${t('results.typical_value')}</span>
-            <span class="deviation-hue deviation-hue--muted">${dev.standardHue}°</span>
+            <span class="deviation-hue deviation-hue--muted">${dev.referenceHue}°</span>
           </div>
           <div class="deviation-value">
             <span class="deviation-label">${t('results.measured_value')}</span>
@@ -168,6 +184,13 @@ function renderDeviationGrid(
   })
 
   grid.innerHTML = cards.join('')
+}
+
+function buildHueRangeGradient(startHue: number, endHue: number): string {
+  const hues = sampleHueRange(startHue, endHue, 7)
+  const stopDenominator = Math.max(1, hues.length - 1)
+  const stops = hues.map((h, i) => `hsl(${Math.round(h)}, 100%, 50%) ${(i / stopDenominator) * 100}%`)
+  return `linear-gradient(90deg, ${stops.join(', ')})`
 }
 
 function wireButtons(
@@ -193,10 +216,18 @@ function wireButtons(
 
   container.querySelector('#btn-download')?.addEventListener('click', () => {
     const locale = getCurrentLocale()
-    const nick = sessionStorage.getItem('spectrumsense-nickname') ?? undefined
-    const card = generateResultCard(result, locale, nick)
+    const card = generateResultCard(result, locale)
     downloadResultCard(card)
   })
+}
+
+function escapeHtml(text: string): string {
+  return text
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
 }
 
 function showToast(container: HTMLElement): void {
@@ -230,7 +261,7 @@ function injectResultsStyles(): void {
     }
 
     .results-header {
-      padding: 3.5rem 0 2.5rem;
+      padding: 3.5rem 0 1.75rem;
       border-bottom: 1px solid var(--border);
     }
 
@@ -260,7 +291,7 @@ function injectResultsStyles(): void {
     }
 
     .results-main {
-      padding-top: 2.5rem;
+      padding-top: 1.5rem;
     }
 
     .results-section {
@@ -269,23 +300,8 @@ function injectResultsStyles(): void {
       animation-delay: 0.15s;
     }
 
-    .results-nickname {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1rem;
-      color: var(--accent);
-      font-weight: 600;
-      margin: 0.3rem 0 0;
-      font-family: var(--font-sans);
-      letter-spacing: 0.01em;
-      padding: 0.35rem 1rem;
-      background: var(--accent-dim);
-      border: 1px solid var(--border-accent);
-      border-radius: var(--radius-lg);
-      animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
-      flex-shrink: 0;
-      white-space: nowrap;
+    .results-section--spectrum {
+      margin-bottom: 1.25rem;
     }
 
     .results-disclaimer--medical {
@@ -330,10 +346,21 @@ function injectResultsStyles(): void {
       color: var(--text-primary);
       font-family: var(--font-mono);
       letter-spacing: -0.02em;
+      display: inline-flex;
+      align-items: baseline;
+      gap: 0.375rem;
+    }
+
+    .summary-shift-color {
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+    }
+
+    .summary-shift-diff {
+      color: var(--text-primary);
     }
 
     .summary-stat-label {
-      font-size: 0.75rem;
+      font-size: 0.8125rem;
       font-weight: 500;
       color: var(--text-muted);
       text-transform: uppercase;
@@ -342,23 +369,14 @@ function injectResultsStyles(): void {
 
     .deviation-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 1rem;
-    }
-
-    /* Center the last card when it's alone in its row (e.g. 7 items in 3 cols) */
-    .deviation-card:last-child:nth-child(3n+1) {
-      grid-column: 2;
     }
 
     @media (max-width: 768px) {
       .deviation-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 0.75rem;
-      }
-      /* Reset 3-col centering; center for 2-col odd last item */
-      .deviation-card:last-child:nth-child(3n+1) {
-        grid-column: auto;
       }
       .deviation-card:last-child:nth-child(2n+1) {
         grid-column: 1 / -1;
@@ -385,25 +403,36 @@ function injectResultsStyles(): void {
         padding: 1rem;
         gap: 0.625rem;
       }
-      .deviation-swatch-lg {
-        width: 28px;
-        height: 28px;
-      }
       .deviation-color-label {
-        font-size: 0.625rem;
+        font-size: 0.6875rem;
+      }
+      .deviation-user-swatch-wrap {
+        height: 42px;
+      }
+      .deviation-reference-inside-label {
+        font-size: 0.6875rem;
+        padding: 0.125rem 0.3125rem;
+      }
+      .deviation-reference-triangle {
+        border-left-width: 5px;
+        border-right-width: 5px;
+      }
+      .deviation-out-of-range-inline {
+        font-size: 0.6875rem;
       }
       .deviation-hue {
         font-size: 0.875rem;
       }
       .deviation-label {
-        font-size: 0.75rem;
+        font-size: 0.8125rem;
       }
       .deviation-diff-badge {
-        font-size: 0.75rem;
+        font-size: 0.8125rem;
         padding: 0.1875rem 0.5rem;
       }
       .deviation-card:last-child:nth-child(2n+1) {
         max-width: 100%;
+        justify-self: stretch;
       }
     }
 
@@ -414,35 +443,99 @@ function injectResultsStyles(): void {
       animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
 
-    .deviation-color-compare {
+    .deviation-user-color {
       display: flex;
-      gap: 0.75rem;
-      justify-content: center;
+      flex-direction: column;
+      gap: 0.5rem;
       padding-bottom: 0.5rem;
       border-bottom: 1px solid var(--border);
     }
 
-    .deviation-color-item {
+    .deviation-user-color-top {
       display: flex;
-      flex-direction: column;
       align-items: center;
-      gap: 0.375rem;
-      flex: 1;
-    }
-
-    .deviation-swatch-lg {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      box-shadow: 0 0 8px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+      justify-content: space-between;
+      gap: 0.5rem;
     }
 
     .deviation-color-label {
-      font-size: 0.6875rem;
+      font-size: 0.8125rem;
       font-weight: 500;
       color: var(--text-muted);
-      text-align: center;
+      text-align: left;
       line-height: 1.2;
+    }
+
+    .deviation-user-swatch-wrap {
+      position: relative;
+      width: 100%;
+      height: 48px;
+    }
+
+    .deviation-user-swatch {
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+
+    .deviation-reference-marker-wrap {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      transform: translateX(-50%);
+      width: 0;
+      pointer-events: none;
+    }
+
+    .deviation-reference-inside-label {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.95);
+      font-family: var(--font-mono);
+      padding: 0.125rem 0.375rem;
+      border-radius: var(--radius-sm);
+      background: rgba(15, 23, 42, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      white-space: nowrap;
+      letter-spacing: 0.01em;
+      margin: 0;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+    }
+
+    .deviation-reference-triangle {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      filter: drop-shadow(0 0 1px rgba(15, 23, 42, 0.85));
+    }
+
+    .deviation-reference-triangle--top {
+      top: 0;
+      border-top: 9px solid rgba(255, 255, 255, 0.98);
+    }
+
+    .deviation-reference-triangle--bottom {
+      bottom: 0;
+      border-bottom: 9px solid rgba(255, 255, 255, 0.98);
+    }
+
+    .deviation-out-of-range-inline {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      letter-spacing: 0.01em;
+      line-height: 1.2;
+      white-space: nowrap;
     }
 
     .deviation-values {
@@ -458,7 +551,7 @@ function injectResultsStyles(): void {
     }
 
     .deviation-label {
-      font-size: 0.8125rem;
+      font-size: 0.875rem;
       color: var(--text-muted);
     }
 
@@ -478,7 +571,7 @@ function injectResultsStyles(): void {
     .deviation-diff-badge {
       display: inline-flex;
       align-self: flex-end;
-      font-size: 0.8125rem;
+      font-size: 0.875rem;
       font-weight: 700;
       font-family: var(--font-mono);
       padding: 0.25rem 0.625rem;
@@ -501,7 +594,7 @@ function injectResultsStyles(): void {
     }
 
     .results-disclaimer {
-      font-size: 0.8125rem;
+      font-size: 0.875rem;
       color: var(--text-muted);
       line-height: 1.6;
       margin-bottom: 2rem;
@@ -517,7 +610,7 @@ function injectResultsStyles(): void {
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      font-size: 0.6875rem;
+      font-size: 0.75rem;
       color: var(--text-muted);
       margin-top: 2.5rem;
       margin-bottom: 2rem;
@@ -569,6 +662,11 @@ function injectResultsStyles(): void {
       flex-wrap: wrap;
     }
 
+    .actions-row .btn-primary {
+      padding: 0.75rem 1.75rem;
+      font-size: 0.9375rem;
+    }
+
     .actions-row .btn-secondary {
       border-radius: var(--radius-lg);
     }
@@ -587,16 +685,13 @@ function injectResultsStyles(): void {
       margin-bottom: 1.5rem;
     }
 
-    @media (max-width: 375px) {
+    @media (max-width: 480px) {
       .results-header {
         padding: 2rem 0 1.5rem;
       }
       .results-heading-row {
         flex-direction: column;
         align-items: flex-start;
-      }
-      .results-nickname {
-        margin-top: 0.25rem;
       }
       .summary-stat-value {
         font-size: 1.125rem;
@@ -606,9 +701,12 @@ function injectResultsStyles(): void {
         grid-template-columns: 1fr 1fr;
         gap: 0.5rem;
       }
+      .actions-row .btn-primary,
       .actions-row .btn-secondary {
         width: 100%;
         justify-content: center;
+        font-size: 0.875rem;
+        padding: 0.625rem 1rem;
       }
     }
   `

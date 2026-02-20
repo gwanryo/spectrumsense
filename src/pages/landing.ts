@@ -103,7 +103,7 @@ function injectLandingStyles(): void {
     }
 
     .lang-btn {
-      padding: 0.375rem 0.875rem;
+      padding: 0.5rem 1rem;
       border-radius: calc(var(--radius-lg) - 4px);
       font-size: 0.8125rem;
       font-weight: 500;
@@ -277,7 +277,7 @@ function injectLandingStyles(): void {
       font-family: var(--font-sans);
       font-size: 0.6875rem;
       font-weight: 600;
-      color: var(--text-muted);
+      color: var(--text-secondary);
       text-transform: uppercase;
       letter-spacing: 0.08em;
       text-align: center;
@@ -298,7 +298,7 @@ function injectLandingStyles(): void {
       align-items: flex-start;
       gap: 0.875rem;
       font-size: 0.8125rem;
-      color: var(--text-muted);
+      color: var(--text-secondary);
       line-height: 1.6;
       font-weight: 300;
     }
@@ -311,28 +311,34 @@ function injectLandingStyles(): void {
       height: 22px;
       flex-shrink: 0;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid var(--border);
+      background: var(--accent-dim);
+      border: 1px solid var(--border-accent);
       font-family: var(--font-mono);
       font-size: 0.6875rem;
       font-weight: 500;
-      color: var(--text-muted);
+      color: var(--accent);
       margin-top: 0.1rem;
     }
 
-    @media (max-width: 375px) {
+    @media (max-width: 480px) {
       .landing-header {
-        padding: 1rem;
+        padding: 1rem 1rem;
       }
       .landing-hero {
-        padding: 1rem 1rem 2rem;
+        padding: 1.5rem 1rem 2rem;
       }
       .landing-content {
         gap: 1.25rem;
       }
+      .landing-description {
+        font-size: 0.875rem;
+      }
       .start-btn {
         width: 100%;
         justify-content: center;
+      }
+      .landing-how {
+        padding: 1.5rem 0;
       }
     }
   `

@@ -1,20 +1,20 @@
 import { describe, it, expect } from 'vitest'
 import { computeMarkerOffsets } from '../src/canvas/spectrum-bar'
-import { BOUNDARIES } from '../src/color'
+import { COLOR_TRANSITIONS, getDefaultBoundaryHue } from '../src/color'
 
 describe('computeMarkerOffsets', () => {
   it('returns one marker entry per boundary', () => {
-    const boundaries = BOUNDARIES.map((b) => b.standardHue)
+    const boundaries = COLOR_TRANSITIONS.map((_, i) => getDefaultBoundaryHue(i))
     const offsets = computeMarkerOffsets(boundaries, 700)
     expect(offsets).toHaveLength(7)
   })
 
-  it('has zero degreeDiff when user boundaries match standard', () => {
-    const boundaries = BOUNDARIES.map((b) => b.standardHue)
+  it('has zero degreeDiff when user boundaries match defaults', () => {
+    const boundaries = COLOR_TRANSITIONS.map((_, i) => getDefaultBoundaryHue(i))
     const offsets = computeMarkerOffsets(boundaries, 700)
     for (const offset of offsets) {
       expect(offset.degreeDiff).toBeCloseTo(0, 5)
-      expect(offset.userX).toBeCloseTo(offset.standardX, 5)
+      expect(offset.userX).toBeCloseTo(offset.referenceX, 5)
     }
   })
 
@@ -22,14 +22,14 @@ describe('computeMarkerOffsets', () => {
     const boundaries = [350, 48, 78, 163, 258, 300, 5]
     const offsets = computeMarkerOffsets(boundaries, 700)
     expect(offsets[0].degreeDiff).toBeCloseTo(-30, 0)
-    expect(offsets[6].degreeDiff).toBeCloseTo(10, 0)
+    expect(offsets[6].degreeDiff).toBeCloseTo(5, 0)
     for (const offset of offsets) {
       expect(offset.degreeDiff).toBeGreaterThanOrEqual(-180)
       expect(offset.degreeDiff).toBeLessThanOrEqual(180)
     }
   })
 
-  it('falls back to standard hue when boundary value is missing', () => {
+  it('falls back to default hue when boundary value is missing', () => {
     const partial = [20, 50]
     const offsets = computeMarkerOffsets(partial, 700)
     expect(offsets[2].degreeDiff).toBeCloseTo(0, 5)

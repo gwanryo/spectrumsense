@@ -10,8 +10,8 @@
 
   /* Text hierarchy */
   --text-primary: #e8e6f0;
-  --text-secondary: #8e8da6;
-  --text-muted: #6b6a85;
+  --text-secondary: #a09eb8;
+  --text-muted: #807e99;
 
   /* Accent — warm teal at the green-blue perceptual boundary */
   --accent: #2dd4bf;
@@ -401,7 +401,7 @@ button:disabled {
 }
 
 /* ── Responsive Mobile ── */
-@media (max-width: 375px) {
+@media (max-width: 480px) {
   h1 {
     font-size: 1.875rem;
   }

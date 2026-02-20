@@ -2,15 +2,19 @@
 
 export type ColorName = 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'violet' | 'pink';
 
-export interface Boundary {
+export interface ColorTransition {
   from: ColorName;
   to: ColorName;
-  standardHue: number;  // reference boundary in HSL degrees
-  searchRange: { low: number; high: number };  // binary search range
+}
+
+export interface SearchRange {
+  low: number;
+  high: number;
 }
 
 export interface BinarySearchState {
-  boundary: Boundary;
+  transition: ColorTransition;
+  searchRange: SearchRange;
   low: number;       // current search low bound (hue degrees)
   high: number;      // current search high bound (hue degrees)
   currentHue: number; // current test hue (midpoint)
@@ -72,7 +76,7 @@ export interface TestResult {
 export interface Deviation {
   color: ColorName;
   userHue: number;
-  standardHue: number;
+  referenceHue: number;
   difference: number;  // signed degrees (positive = shifted clockwise)
 }
 

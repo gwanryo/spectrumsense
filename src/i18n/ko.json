@@ -8,7 +8,7 @@
   "landing.how_title": "진행 방식",
   "landing.how_step1": "화면에 표시된 색상이 인접한 두 색 중 어느 쪽에 가까운지 선택합니다",
   "landing.how_step2": "이진 탐색 알고리즘이 응답을 바탕으로 7개 색상 경계를 정밀하게 좁혀갑니다",
-  "landing.how_step3": "측정된 나만의 색상 지도를 기준값과 비교하여 보여줍니다",
+  "landing.how_step3": "측정된 나만의 색상 지도를 표준 색상과 비교하여 보여줍니다",
 
   "landing.lang.en": "English",
   "landing.lang.ko": "한국어",
@@ -42,13 +42,17 @@
   "colors.pink": "분홍",
 
   "results.title": "나의 색상 경계",
-  "results.subtitle": "기준값과 비교한 나의 인식",
+  "results.title_with_nickname": "{nickname}의 색상 경계",
+  "results.subtitle": "표준 색상과 비교한 나의 색상 경계",
 
-  "results.typical_value": "기준값",
+  "results.typical_value": "표준 색상",
+  "results.reference_short": "표준",
   "results.measured_value": "중앙값",
-  "results.your_color": "당신의 {color}",
+  "results.your_color": "{color}",
+  "results.out_of_range": "범위 밖",
+  "results.reference_out_of_range": "범위 밖",
   "results.legend_user": "당신의 색 경계",
-  "results.legend_reference": "기준 색 위치",
+  "results.legend_reference": "표준 색상",
 
   "results.citation": "참고 문헌",
   "results.refine": "정밀 측정 (+21문항)",
