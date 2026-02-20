@@ -1,196 +1,220 @@
 import type { TestResult, Deviation, Locale } from '../types'
-import { normalizeHue, STANDARD_COLORS, clockwiseSpan, COLOR_ORDER, sampleHueRange, huePositionInRange, getColorHsl } from '../color'
+import {
+  normalizeHue,
+  STANDARD_COLORS,
+  clockwiseSpan,
+  COLOR_ORDER,
+  sampleHueRange,
+  huePositionInRange,
+  getColorHsl,
+} from '../color'
 import { computeDeviations, getColorRegions, summarizeResults } from '../result'
+import { createFadeGradient } from './gradient'
+import en from '../i18n/en.json'
+import ko from '../i18n/ko.json'
+import ja from '../i18n/ja.json'
 
-const CARD_WIDTH = 1200
-const CARD_HEIGHT = 630
+// ── Card dimensions ──
+const W = 1200
+const H = 1350
+const PAD = 72
+const CW = W - PAD * 2
 
-const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+// ── Typography — use the site's loaded web fonts with system fallbacks ──
+const SERIF = "'Instrument Serif', Georgia, 'Times New Roman', serif"
+const SANS = "'Outfit', 'Noto Sans KR', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+const MONO = "'JetBrains Mono', 'Noto Sans KR', 'Noto Sans JP', 'SF Mono', Consolas, monospace"
 
-const SUMMARY_CARD_Y = 266
-const SUMMARY_CARD_HEIGHT = 42
-const SUMMARY_TO_COLOR_SECTION_GAP = 24
-const BOUNDARY_ROW_HEIGHT = 116
-const BOUNDARY_SECTION_START_Y = SUMMARY_CARD_Y + SUMMARY_CARD_HEIGHT + SUMMARY_TO_COLOR_SECTION_GAP
-
-// Dark theme colors (matching CSS variables)
-const COLORS = {
-  bgPrimary: '#10101c',
-  bgSecondary: '#0e0e18',
-  bgCard: '#121220',
-  textPrimary: '#e8e6f0',
-  textSecondary: '#a09eb8',
-  textMuted: '#807e99',
+// ── Palette (dark theme matching CSS variables) ──
+const C = {
+  bg: '#08080f',
+  card: '#111120',
+  text: '#e8e6f0',
+  sub: '#a09eb8',
+  muted: '#807e99',
   accent: '#2dd4bf',
-  border: 'rgba(255, 255, 255, 0.10)',
+  border: 'rgba(255, 255, 255, 0.08)',
 }
+
+// ── Grid layout for boundary details ──
+const GRID_COLS = 4
+const GRID_GAP = 16
+const CELL_W = Math.floor((CW - (GRID_COLS - 1) * GRID_GAP) / GRID_COLS)
+const SWATCH_H = 96
+const CELL_H = 200
+const GRID_ROW_GAP = 20
+
+const DEFAULT_DOWNLOAD_FILENAME = 'spectrumsense-result.png'
+const LOCALE_MESSAGES: Record<Locale, Record<string, string>> = { en, ko, ja }
+
+// ── Public types ──
+
+export interface ResultCardOptions {
+  filename?: string
+  nickname?: string
+}
+
+export interface ResultCardDownloadDeps {
+  generateCard?: (result: TestResult, locale: Locale, options?: ResultCardOptions) => HTMLCanvasElement
+  downloadCard?: (canvas: HTMLCanvasElement, filename?: string) => void
+}
+
+// ── Main entry ──
 
 export function generateResultCard(
   result: TestResult,
-  locale: Locale = 'en'
+  locale: Locale = 'en',
+  options: ResultCardOptions = {},
 ): HTMLCanvasElement {
   const canvas = document.createElement('canvas')
-  canvas.width = CARD_WIDTH
-  canvas.height = CARD_HEIGHT
+  canvas.width = W
+  canvas.height = H
 
   const ctx = canvas.getContext('2d')!
   const deviations = computeDeviations(result.boundaries)
+  const regions = getColorRegions(result.boundaries)
+  const nick = (options.nickname ?? '').trim()
 
   drawBackground(ctx)
-  drawHeader(ctx)
-  drawMiniSpectrumBar(ctx, result.boundaries, locale)
-  drawSummaryStats(ctx, deviations, result.boundaries, locale)
-  drawBoundaryStats(ctx, deviations, result.boundaries, locale)
-  drawFooter(ctx)
+
+  let y = 88
+  y = drawHeader(ctx, locale, nick, y)
+  y += 52
+  y = drawSpectrumSection(ctx, result.boundaries, regions, locale, y)
+  y += 52
+  y = drawSummaryStats(ctx, deviations, result.boundaries, locale, y)
+  y += 56
+  drawBoundaryGrid(ctx, deviations, regions, locale, y)
+  drawFooter(ctx, locale)
 
   return canvas
 }
 
+// ── Background ──
+
 function drawBackground(ctx: CanvasRenderingContext2D): void {
-  ctx.fillStyle = COLORS.bgPrimary
-  ctx.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT)
+  ctx.fillStyle = C.bg
+  ctx.fillRect(0, 0, W, H)
 
-  const gradient = ctx.createLinearGradient(0, 0, CARD_WIDTH, CARD_HEIGHT)
-  gradient.addColorStop(0, 'rgba(45, 212, 191, 0.07)')
-  gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0)')
-  gradient.addColorStop(1, 'rgba(45, 212, 191, 0.03)')
-  ctx.fillStyle = gradient
-  ctx.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT)
+  // Subtle teal aurora gradient
+  const grad = ctx.createLinearGradient(0, 0, W, H)
+  grad.addColorStop(0, 'rgba(45, 212, 191, 0.05)')
+  grad.addColorStop(0.5, 'rgba(0, 0, 0, 0)')
+  grad.addColorStop(1, 'rgba(45, 212, 191, 0.02)')
+  ctx.fillStyle = grad
+  ctx.fillRect(0, 0, W, H)
 
-  const radius = 16
-  ctx.beginPath()
-  ctx.moveTo(radius, 0)
-  ctx.lineTo(CARD_WIDTH - radius, 0)
-  ctx.quadraticCurveTo(CARD_WIDTH, 0, CARD_WIDTH, radius)
-  ctx.lineTo(CARD_WIDTH, CARD_HEIGHT - radius)
-  ctx.quadraticCurveTo(CARD_WIDTH, CARD_HEIGHT, CARD_WIDTH - radius, CARD_HEIGHT)
-  ctx.lineTo(radius, CARD_HEIGHT)
-  ctx.quadraticCurveTo(0, CARD_HEIGHT, 0, CARD_HEIGHT - radius)
-  ctx.lineTo(0, radius)
-  ctx.quadraticCurveTo(0, 0, radius, 0)
-  ctx.closePath()
-  ctx.strokeStyle = COLORS.border
+  // Outer rounded border
+  ctx.strokeStyle = C.border
   ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.roundRect(0, 0, W, H, 16)
   ctx.stroke()
 }
 
-function drawHeader(ctx: CanvasRenderingContext2D): void {
-  ctx.fillStyle = COLORS.textPrimary
-  ctx.font = `bold 48px ${FONT}`
+// ── Header ──
+
+function drawHeader(
+  ctx: CanvasRenderingContext2D,
+  locale: Locale,
+  nickname: string,
+  y: number,
+): number {
+  const title = nickname
+    ? tl(locale, 'results.title_with_nickname', { nickname })
+    : tl(locale, 'results.title')
+  const subtitle = tl(locale, 'results.subtitle')
+
+  // Title — auto-shrink for long nicknames
+  let titleSize = 52
+  while (titleSize > 36) {
+    ctx.font = `400 ${titleSize}px ${SERIF}`
+    if (ctx.measureText(title).width <= CW) break
+    titleSize -= 2
+  }
+
+  ctx.fillStyle = C.text
   ctx.textAlign = 'left'
   ctx.textBaseline = 'top'
-  ctx.fillText('SpectrumSense', 80, 48)
+  ctx.font = `400 ${titleSize}px ${SERIF}`
+  ctx.fillText(title, PAD, y)
+  y += titleSize + 14
 
-  ctx.fillStyle = COLORS.accent
-  ctx.fillRect(80, 98, 200, 3)
+  // Accent underline
+  ctx.fillStyle = C.accent
+  ctx.fillRect(PAD, y, 180, 3)
+  y += 20
 
-  ctx.fillStyle = COLORS.textSecondary
-  ctx.font = `22px ${FONT}`
-  ctx.fillText('Color Perception Centers', 80, 112)
+  // Subtitle
+  ctx.fillStyle = C.sub
+  ctx.font = `300 24px ${SANS}`
+  ctx.fillText(subtitle, PAD, y)
+  y += 30
 
+  return y
 }
 
-const CARD_COLOR_LABELS: Record<string, Record<Locale, string>> = {
-  red:    { en: 'Red',    ko: '빨강', ja: '赤' },
-  orange: { en: 'Orange', ko: '주황', ja: '橙' },
-  yellow: { en: 'Yellow', ko: '노랑', ja: '黄' },
-  green:  { en: 'Green',  ko: '초록', ja: '緑' },
-  blue:   { en: 'Blue',   ko: '파랑', ja: '青' },
-  violet: { en: 'Violet', ko: '보라', ja: '紫' },
-  pink:   { en: 'Pink',   ko: '분홍', ja: 'ピンク' },
-}
+// ── Spectrum bar section ──
 
-const SUMMARY_AVG_LABEL: Record<Locale, string> = {
-  en: 'Avg. Deviation',
-  ko: '평균 편차',
-  ja: '平均偏差',
-}
-
-const SUMMARY_MOST_LABEL: Record<Locale, string> = {
-  en: 'Largest Shift',
-  ko: '최대 편차',
-  ja: '最大シフト',
-}
-
-const YOUR_COLOR_LABEL_TEMPLATE: Record<Locale, string> = {
-  en: '{color}',
-  ko: '{color}',
-  ja: '{color}',
-}
-
-const REFERENCE_LABEL: Record<Locale, string> = {
-  en: 'Reference',
-  ko: '표준',
-  ja: '基準',
-}
-
-const REFERENCE_OUT_OF_RANGE_LABEL: Record<Locale, string> = {
-  en: 'Out of range',
-  ko: '범위 밖',
-  ja: '範囲外',
-}
-
-const VALUE_YOUR_LABEL: Record<Locale, string> = {
-  en: 'Your Value',
-  ko: '중앙값',
-  ja: '中央値',
-}
-
-function drawMiniSpectrumBar(
+function drawSpectrumSection(
   ctx: CanvasRenderingContext2D,
   userBoundaries: number[],
-  locale: Locale
-): void {
-  const barX = 80
-  const barW = CARD_WIDTH - 160
-  const barH = 50
-  const radius = 8
+  regions: ReturnType<typeof getColorRegions>,
+  locale: Locale,
+  y: number,
+): number {
+  const barX = PAD
+  const barW = CW
+  const barH = 88
+  const barR = 8
 
-  const barY = 155
-  const refArrowY = barY + barH + 10
-  const refLabelY = refArrowY + 18
+  // Top legend
+  ctx.font = `500 18px ${SANS}`
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'top'
+  ctx.fillStyle = C.muted
+  ctx.fillText(tl(locale, 'results.legend_user'), barX, y)
+  y += 30
 
-  // Spectrum bar — muted hue gradient in rounded rect
-  const regions = getColorRegions(userBoundaries)
-
+  // ── Bar ──
+  const barY = y
   ctx.save()
   ctx.beginPath()
-  ctx.roundRect(barX, barY, barW, barH, radius)
+  ctx.roundRect(barX, barY, barW, barH, barR)
   ctx.clip()
 
-  // Muted hue gradient (matching spectrum-bar.ts)
+  // Full hue gradient
   for (let i = 0; i < barW; i++) {
-    const hue = (i / barW) * 360
-    ctx.fillStyle = `hsl(${hue}, 100%, 50%)`
+    ctx.fillStyle = `hsl(${(i / barW) * 360}, 100%, 50%)`
     ctx.fillRect(barX + i, barY, 1, barH)
   }
 
-  // Dark vignette edges
-  const vigL = ctx.createLinearGradient(barX, 0, barX + 30, 0)
-  vigL.addColorStop(0, 'rgba(6, 6, 12, 0.5)')
+  // Vignette edges
+  const vigL = ctx.createLinearGradient(barX, 0, barX + 28, 0)
+  vigL.addColorStop(0, 'rgba(8, 8, 15, 0.5)')
   vigL.addColorStop(1, 'transparent')
   ctx.fillStyle = vigL
-  ctx.fillRect(barX, barY, 30, barH)
+  ctx.fillRect(barX, barY, 28, barH)
 
-  const vigR = ctx.createLinearGradient(barX + barW - 30, 0, barX + barW, 0)
+  const vigR = ctx.createLinearGradient(barX + barW - 28, 0, barX + barW, 0)
   vigR.addColorStop(0, 'transparent')
-  vigR.addColorStop(1, 'rgba(6, 6, 12, 0.5)')
+  vigR.addColorStop(1, 'rgba(8, 8, 15, 0.5)')
   ctx.fillStyle = vigR
-  ctx.fillRect(barX + barW - 30, barY, 30, barH)
+  ctx.fillRect(barX + barW - 28, barY, 28, barH)
 
-  // Boundary lines on the bar
+  // User boundary lines (dual-stroke fade)
   for (const b of userBoundaries.map(normalizeHue)) {
     const bx = barX + (b / 360) * barW
 
-    ctx.strokeStyle = 'rgba(12, 14, 24, 0.52)'
-    ctx.lineWidth = 3.2
+    ctx.strokeStyle = createFadeGradient(ctx, 0, barY, 0, barY + barH, 'dark')
+    ctx.lineWidth = 2.8
     ctx.beginPath()
     ctx.moveTo(bx, barY)
     ctx.lineTo(bx, barY + barH)
     ctx.stroke()
 
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.86)'
-    ctx.lineWidth = 1.6
+    ctx.strokeStyle = createFadeGradient(ctx, 0, barY, 0, barY + barH, 'light')
+    ctx.lineWidth = 1.4
     ctx.beginPath()
     ctx.moveTo(bx, barY)
     ctx.lineTo(bx, barY + barH)
@@ -199,337 +223,510 @@ function drawMiniSpectrumBar(
 
   ctx.restore()
 
-  // Region labels inside the bar with dark pill backdrop
-  ctx.font = `500 16px ${FONT}`
+  // Region labels inside bar (dark pill backdrop)
+  ctx.font = `500 18px ${SANS}`
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
 
-  const pillPadX = 10
-  const pillPadY = 5
-  const pillR = 6
-
-  for (let i = 0; i < regions.length; i++) {
-    const region = regions[i]
+  for (const region of regions) {
     const colorIdx = COLOR_ORDER.indexOf(region.name)
     if (colorIdx < 0) continue
 
-    const label = CARD_COLOR_LABELS[region.name]?.[locale] ?? region.name
+    const label = colorLabel(locale, region.name)
     const span = clockwiseSpan(region.startHue, region.endHue)
-    const midHue = normalizeHue(region.startHue + span / 2)
-    const midX = barX + (midHue / 360) * barW
+    const mid = normalizeHue(region.startHue + span / 2)
+    const midX = barX + (mid / 360) * barW
     const segW = (span / 360) * barW
 
-    const textW = ctx.measureText(label).width
-    const pillW = textW + pillPadX * 2
+    const tw = ctx.measureText(label).width
+    const pillW = tw + 20
     if (pillW + 6 > segW) continue
 
-    const pillH = 16 + pillPadY * 2
-    const pX = midX - pillW / 2
-    const pY = barY + (barH - pillH) / 2
+    const pillH = 28
     ctx.fillStyle = 'rgba(0, 0, 0, 0.50)'
     ctx.beginPath()
-    ctx.roundRect(pX, pY, pillW, pillH, pillR)
+    ctx.roundRect(midX - pillW / 2, barY + (barH - pillH) / 2, pillW, pillH, 5)
     ctx.fill()
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.92)'
     ctx.fillText(label, midX, barY + barH / 2)
   }
 
-  // Reference markers (▲ arrows) below the bar
-  const arrowSize = 5
+  y = barY + barH + 14
+
+  // Reference markers (▲ arrows + color labels, staggered to avoid overlap)
+  const arrowSize = 6
+  const refFontSize = 17
   for (let i = 0; i < COLOR_ORDER.length; i++) {
     const color = COLOR_ORDER[i]
     const hue = STANDARD_COLORS[color]
     const cx = barX + (normalizeHue(hue) / 360) * barW
-    const clampedX = Math.max(barX + 20, Math.min(barX + barW - 20, cx))
+    const clampedX = Math.max(barX + 16, Math.min(barX + barW - 16, cx))
+    const staggerY = i % 2 === 1 ? 14 : 0
 
-    // ▲ arrow
-    ctx.fillStyle = COLORS.textMuted
+    ctx.fillStyle = C.muted
     ctx.beginPath()
-    ctx.moveTo(cx, refArrowY)
-    ctx.lineTo(cx - arrowSize, refArrowY + arrowSize + 1)
-    ctx.lineTo(cx + arrowSize, refArrowY + arrowSize + 1)
+    ctx.moveTo(cx, y)
+    ctx.lineTo(cx - arrowSize, y + arrowSize + 1)
+    ctx.lineTo(cx + arrowSize, y + arrowSize + 1)
     ctx.closePath()
     ctx.fill()
 
-    // Color name label
-    ctx.font = `500 15px ${FONT}`
+    ctx.font = `500 ${refFontSize}px ${SANS}`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'top'
-    ctx.fillStyle = COLORS.textMuted
-    const refLabel = CARD_COLOR_LABELS[color]?.[locale] ?? color
-    ctx.fillText(refLabel, clampedX, refLabelY)
+    ctx.fillStyle = C.muted
+    ctx.fillText(colorLabel(locale, color), clampedX, y + arrowSize + 5 + staggerY)
   }
 
+  y += arrowSize + 5 + refFontSize + 14 + 14
+
+  // Bottom legend
+  ctx.font = `500 18px ${SANS}`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'top'
+  ctx.fillStyle = C.muted
+  ctx.fillText(tl(locale, 'results.legend_reference'), W / 2, y)
+  y += 24
+
+  return y
 }
+
+// ── Summary stats (two side-by-side cards) ──
 
 function drawSummaryStats(
   ctx: CanvasRenderingContext2D,
   deviations: Deviation[],
   userBoundaries: number[],
-  locale: Locale
-): void {
+  locale: Locale,
+  y: number,
+): number {
   const summary = summarizeResults(deviations, userBoundaries)
-  const y = SUMMARY_CARD_Y
-  const cardX = 80
-  const cardW = (CARD_WIDTH - 160 - 16) / 2  // two cards with 16px gap
-  const cardH = SUMMARY_CARD_HEIGHT
-  const cardR = 8
+  const cardGap = 20
+  const cardW = (CW - cardGap) / 2
+  const cardH = 84
+  const cardR = 10
 
   const madValue = Math.round(summary.meanAbsoluteDeviation * 10) / 10
-  const mostColor = CARD_COLOR_LABELS[summary.mostShifted.color]?.[locale] ?? summary.mostShifted.color
+  const mostColor = colorLabel(locale, summary.mostShifted.color)
   const mostDiff = Math.round(summary.mostShifted.difference)
-  const mostDiffText = mostDiff > 0 ? `+${mostDiff}\u00B0` : `${mostDiff}\u00B0`
-  const mostColorHsl = getColorHsl(summary.mostShifted.color)
+  const mostDiffStr = mostDiff > 0 ? `+${mostDiff}\u00B0` : `${mostDiff}\u00B0`
+  const mostHsl = getColorHsl(summary.mostShifted.color)
 
-  const avgLabel = SUMMARY_AVG_LABEL[locale] ?? SUMMARY_AVG_LABEL.en
-  const mostLabel = SUMMARY_MOST_LABEL[locale] ?? SUMMARY_MOST_LABEL.en
+  const avgLabel = tl(locale, 'results.summary_avg')
+  const mostLabel = tl(locale, 'results.summary_most_shifted')
 
-  const cards = [
-    { kind: 'avg' as const, x: cardX },
-    { kind: 'most' as const, x: cardX + cardW + 16 },
-  ]
-
-  for (const card of cards) {
-    // Card background
-    ctx.fillStyle = COLORS.bgCard
+  // Draw both card backgrounds
+  for (const cx of [PAD, PAD + cardW + cardGap]) {
+    ctx.fillStyle = C.card
     ctx.beginPath()
-    ctx.roundRect(card.x, y, cardW, cardH, cardR)
+    ctx.roundRect(cx, y, cardW, cardH, cardR)
     ctx.fill()
-    ctx.strokeStyle = COLORS.border
+    ctx.strokeStyle = C.border
     ctx.lineWidth = 1
     ctx.beginPath()
-    ctx.roundRect(card.x, y, cardW, cardH, cardR)
+    ctx.roundRect(cx, y, cardW, cardH, cardR)
     ctx.stroke()
+  }
+
+  // Card 1: Average deviation
+  {
+    const cx = PAD
+    const valueText = `${madValue}\u00B0`
+    const gap = 14
+    const maxInner = cardW - 40
+    let size = 30
+    while (size > 18) {
+      ctx.font = `700 ${size}px ${MONO}`
+      const vw = ctx.measureText(valueText).width
+      const labelSize = Math.round(size * 0.68)
+      ctx.font = `500 ${labelSize}px ${SANS}`
+      const lw = ctx.measureText(avgLabel).width
+      if (vw + gap + lw <= maxInner) break
+      size--
+    }
+
+    ctx.font = `700 ${size}px ${MONO}`
+    const vw = ctx.measureText(valueText).width
+    const labelSize = Math.round(size * 0.68)
+    ctx.font = `500 ${labelSize}px ${SANS}`
+    const lw = ctx.measureText(avgLabel).width
+    const totalW = vw + gap + lw
+    const startX = cx + (cardW - totalW) / 2
 
     ctx.textAlign = 'left'
     ctx.textBaseline = 'middle'
 
-    if (card.kind === 'avg') {
-      const valueText = `${madValue}\u00B0`
-      ctx.font = `bold 22px ${FONT}`
-      const valueW = ctx.measureText(valueText).width
-      ctx.font = `500 15px ${FONT}`
-      const labelW = ctx.measureText(avgLabel).width
-      const gap = 12
-      const totalW = valueW + gap + labelW
-      const startX = card.x + (cardW - totalW) / 2
+    ctx.fillStyle = C.text
+    ctx.font = `700 ${size}px ${MONO}`
+    ctx.fillText(valueText, startX, y + cardH / 2)
 
-      ctx.fillStyle = COLORS.textPrimary
-      ctx.font = `bold 22px ${FONT}`
-      ctx.fillText(valueText, startX, y + cardH / 2)
+    ctx.fillStyle = C.muted
+    ctx.font = `500 ${labelSize}px ${SANS}`
+    ctx.fillText(avgLabel, startX + vw + gap, y + cardH / 2)
+  }
 
-      ctx.fillStyle = COLORS.textMuted
-      ctx.font = `500 15px ${FONT}`
-      ctx.fillText(avgLabel, startX + valueW + gap, y + cardH / 2)
-      continue
+  // Card 2: Most shifted color
+  {
+    const cx = PAD + cardW + cardGap
+    const gap1 = 6
+    const gap2 = 14
+    const maxInner = cardW - 40
+    let size = 30
+    while (size > 18) {
+      ctx.font = `700 ${size}px ${SANS}`
+      const cw = ctx.measureText(mostColor).width
+      ctx.font = `700 ${size}px ${MONO}`
+      const dw = ctx.measureText(mostDiffStr).width
+      const labelSize = Math.round(size * 0.68)
+      ctx.font = `500 ${labelSize}px ${SANS}`
+      const lw = ctx.measureText(mostLabel).width
+      if (cw + gap1 + dw + gap2 + lw <= maxInner) break
+      size--
     }
 
-    // Most-shift card: color name tinted by the actual color
-    const colorText = mostColor
-    const diffText = ` ${mostDiffText}`
-    ctx.font = `bold 22px ${FONT}`
-    const colorW = ctx.measureText(colorText).width
-    const diffW = ctx.measureText(diffText).width
-    ctx.font = `500 15px ${FONT}`
-    const labelW = ctx.measureText(mostLabel).width
-    const gap = 12
-    const totalW = colorW + diffW + gap + labelW
-    const startX = card.x + (cardW - totalW) / 2
+    ctx.font = `700 ${size}px ${SANS}`
+    const cw = ctx.measureText(mostColor).width
+    ctx.font = `700 ${size}px ${MONO}`
+    const dw = ctx.measureText(mostDiffStr).width
+    const labelSize = Math.round(size * 0.68)
+    ctx.font = `500 ${labelSize}px ${SANS}`
+    const lw = ctx.measureText(mostLabel).width
+    const totalW = cw + gap1 + dw + gap2 + lw
+    const startX = cx + (cardW - totalW) / 2
 
-    ctx.font = `bold 22px ${FONT}`
-    ctx.fillStyle = mostColorHsl
-    ctx.fillText(colorText, startX, y + cardH / 2)
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'middle'
+    const midY = y + cardH / 2
 
-    ctx.fillStyle = COLORS.textPrimary
-    ctx.fillText(diffText, startX + colorW, y + cardH / 2)
+    ctx.fillStyle = mostHsl
+    ctx.font = `700 ${size}px ${SANS}`
+    ctx.fillText(mostColor, startX, midY)
 
-    ctx.fillStyle = COLORS.textMuted
-    ctx.font = `500 15px ${FONT}`
-    ctx.fillText(mostLabel, startX + colorW + diffW + gap, y + cardH / 2)
+    ctx.fillStyle = C.text
+    ctx.font = `700 ${size}px ${MONO}`
+    ctx.fillText(mostDiffStr, startX + cw + gap1, midY)
+
+    ctx.fillStyle = C.muted
+    ctx.font = `500 ${labelSize}px ${SANS}`
+    ctx.fillText(mostLabel, startX + cw + gap1 + dw + gap2, midY)
   }
+
+  return y + cardH
 }
 
-function drawBoundaryStats(
+// ── Boundary detail grid (4 + 3 centered) ──
+
+function drawBoundaryGrid(
   ctx: CanvasRenderingContext2D,
   deviations: Deviation[],
-  userBoundaries: number[],
-  locale: Locale
-): void {
-  const startX = 80
-  const startY = BOUNDARY_SECTION_START_Y
-  const colWidth = (CARD_WIDTH - 160) / 4
-  const rowHeight = BOUNDARY_ROW_HEIGHT
-
-  const regions = getColorRegions(userBoundaries)
+  regions: ReturnType<typeof getColorRegions>,
+  locale: Locale,
+  y: number,
+): number {
   const regionByColor = new Map(regions.map((r, i) => [r.name, i]))
 
   deviations.forEach((dev, i) => {
-    const col = i % 4
-    const row = Math.floor(i / 4)
-    const x = startX + col * colWidth
-    const y = startY + row * rowHeight
+    const row = i < GRID_COLS ? 0 : 1
+    const col = row === 0 ? i : i - GRID_COLS
 
-    const colorName = CARD_COLOR_LABELS[dev.color]?.[locale] ?? dev.color
-    const yourColorLabel = formatYourColorLabel(colorName, locale)
-    const referenceLabel = REFERENCE_LABEL[locale] ?? REFERENCE_LABEL.en
-    const outOfRangeLabel = REFERENCE_OUT_OF_RANGE_LABEL[locale] ?? REFERENCE_OUT_OF_RANGE_LABEL.en
-    const valueYourLabel = VALUE_YOUR_LABEL[locale] ?? VALUE_YOUR_LABEL.en
-
-    // Single full-width user swatch with optional reference marker
-    const swX = x + 2
-    const swW = colWidth - 8
-    const swH = 48
-    const swRadius = 6
-    const swY = y + 18
-
-    const regionIdx = regionByColor.get(dev.color)!
-    const region = regions[regionIdx]
-    const userHues = sampleHueRange(region.startHue, region.endHue, 7)
-    const userGradient = ctx.createLinearGradient(swX, swY + swH / 2, swX + swW, swY + swH / 2)
-    const stopDenominator = Math.max(1, userHues.length - 1)
-    for (let stopIdx = 0; stopIdx < userHues.length; stopIdx++) {
-      const stopHue = userHues[stopIdx]
-      userGradient.addColorStop(stopIdx / stopDenominator, `hsl(${Math.round(stopHue)}, 100%, 50%)`)
+    let cellX: number
+    if (row === 0) {
+      cellX = PAD + col * (CELL_W + GRID_GAP)
+    } else {
+      // Center the second row (3 items)
+      const count = deviations.length - GRID_COLS
+      const rowW = count * CELL_W + (count - 1) * GRID_GAP
+      cellX = PAD + (CW - rowW) / 2 + col * (CELL_W + GRID_GAP)
     }
 
-    // Top row labels
-    ctx.font = `500 14px ${FONT}`
-    ctx.textBaseline = 'middle'
+    const cellY = y + row * (CELL_H + GRID_ROW_GAP)
+    drawBoundaryCell(ctx, dev, regions, regionByColor, locale, cellX, cellY)
+  })
+
+  const totalRows = Math.ceil(deviations.length / GRID_COLS)
+  return y + totalRows * CELL_H + (totalRows - 1) * GRID_ROW_GAP
+}
+
+// ── Single boundary cell ──
+
+function drawBoundaryCell(
+  ctx: CanvasRenderingContext2D,
+  dev: Deviation,
+  regions: ReturnType<typeof getColorRegions>,
+  regionByColor: Map<string, number>,
+  locale: Locale,
+  x: number,
+  y: number,
+): void {
+  const w = CELL_W
+  const colorName = colorLabel(locale, dev.color)
+  const yourLabel = tl(locale, 'results.your_color', { color: colorName })
+  const refLabel = tl(locale, 'results.typical_value')
+  const measLabel = tl(locale, 'results.measured_value')
+  const outOfRangeLabel = tl(locale, 'results.reference_out_of_range')
+
+  const regionIdx = regionByColor.get(dev.color)!
+  const region = regions[regionIdx]
+  const userHues = sampleHueRange(region.startHue, region.endHue, 7)
+
+  const refPosition = huePositionInRange(dev.referenceHue, region.startHue, region.endHue)
+  const hasRef = refPosition !== null
+
+  let cy = y
+
+  // ── Color label ──
+  ctx.font = `500 16px ${SANS}`
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'top'
+  ctx.fillStyle = C.muted
+  ctx.fillText(yourLabel, x, cy, w * 0.62)
+
+  if (!hasRef) {
+    const outSize = shrinkFont(ctx, outOfRangeLabel, '500', SANS, w * 0.34, 14, 10)
+    ctx.font = `500 ${outSize}px ${SANS}`
+    ctx.textAlign = 'right'
+    ctx.fillText(outOfRangeLabel, x + w, cy + 2)
     ctx.textAlign = 'left'
-    ctx.fillStyle = COLORS.textMuted
-    ctx.fillText(yourColorLabel, swX, y + 8)
+  }
 
-    const markerRatio = huePositionInRange(dev.referenceHue, region.startHue, region.endHue)
-    const hasReferenceMarker = markerRatio !== null
-    if (!hasReferenceMarker) {
-      ctx.textAlign = 'right'
-      ctx.fillText(outOfRangeLabel, swX + swW, y + 8)
-      ctx.textAlign = 'left'
+  cy += 22
+
+  // ── Gradient swatch ──
+  const swY = cy
+  const swH = SWATCH_H
+  const grad = ctx.createLinearGradient(x, 0, x + w, 0)
+  const stopDenom = Math.max(1, userHues.length - 1)
+  userHues.forEach((h, i) => {
+    grad.addColorStop(i / stopDenom, `hsl(${Math.round(h)}, 100%, 50%)`)
+  })
+
+  ctx.beginPath()
+  ctx.roundRect(x, swY, w, swH, 6)
+  ctx.fillStyle = grad
+  ctx.fill()
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)'
+  ctx.lineWidth = 1
+  ctx.stroke()
+
+  // Reference marker inside swatch (dual-stroke line + pill label)
+  if (hasRef) {
+    const mx = x + refPosition * w
+    const refShort = tl(locale, 'results.reference_short')
+
+    const pillSize = shrinkFont(ctx, refShort, '700', SANS, w * 0.32, 14, 10)
+    ctx.font = `700 ${pillSize}px ${SANS}`
+    const refLW = ctx.measureText(refShort).width
+    const pPadX = 7
+    const pPadY = 5
+    const pW = refLW + pPadX * 2
+    const pH = pillSize + pPadY * 2
+    const pX = mx - pW / 2
+    const pY = swY + (swH - pH) / 2
+
+    // Marker line segments (top + bottom around pill)
+    const lineTop = swY + 1
+    const lineBot = swY + swH - 1
+    const gapPad = 1.5
+    const topEnd = Math.max(lineTop, pY - gapPad)
+    const botStart = Math.min(lineBot, pY + pH + gapPad)
+
+    ctx.save()
+    ctx.lineCap = 'round'
+
+    if (topEnd - lineTop > 1) {
+      ctx.strokeStyle = createFadeGradient(ctx, mx, lineTop, mx, topEnd, 'dark')
+      ctx.lineWidth = 3
+      ctx.beginPath()
+      ctx.moveTo(mx, lineTop)
+      ctx.lineTo(mx, topEnd)
+      ctx.stroke()
+
+      ctx.strokeStyle = createFadeGradient(ctx, mx, lineTop, mx, topEnd, 'light')
+      ctx.lineWidth = 1.4
+      ctx.beginPath()
+      ctx.moveTo(mx, lineTop)
+      ctx.lineTo(mx, topEnd)
+      ctx.stroke()
     }
 
-    // User swatch
+    if (lineBot - botStart > 1) {
+      ctx.strokeStyle = createFadeGradient(ctx, mx, botStart, mx, lineBot, 'dark')
+      ctx.lineWidth = 3
+      ctx.beginPath()
+      ctx.moveTo(mx, botStart)
+      ctx.lineTo(mx, lineBot)
+      ctx.stroke()
+
+      ctx.strokeStyle = createFadeGradient(ctx, mx, botStart, mx, lineBot, 'light')
+      ctx.lineWidth = 1.4
+      ctx.beginPath()
+      ctx.moveTo(mx, botStart)
+      ctx.lineTo(mx, lineBot)
+      ctx.stroke()
+    }
+
+    ctx.restore()
+
+    // Pill background
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.72)'
     ctx.beginPath()
-    ctx.roundRect(swX, swY, swW, swH, swRadius)
-    ctx.fillStyle = userGradient
+    ctx.roundRect(pX, pY, pW, pH, 3)
     ctx.fill()
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)'
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)'
     ctx.lineWidth = 1
     ctx.stroke()
 
-    if (hasReferenceMarker) {
-      const markerX = swX + (markerRatio * swW)
-      const markerColor = 'rgba(255, 255, 255, 0.98)'
-
-      // Top downward triangle
-      ctx.fillStyle = markerColor
-      ctx.beginPath()
-      ctx.moveTo(markerX, swY + 9)
-      ctx.lineTo(markerX - 6, swY)
-      ctx.lineTo(markerX + 6, swY)
-      ctx.closePath()
-      ctx.fill()
-
-      // Bottom upward triangle
-      ctx.beginPath()
-      ctx.moveTo(markerX, swY + swH - 9)
-      ctx.lineTo(markerX - 6, swY + swH)
-      ctx.lineTo(markerX + 6, swY + swH)
-      ctx.closePath()
-      ctx.fill()
-
-      // Label centered between triangles
-      ctx.font = `700 12px ${FONT}`
-      const refLabelW = ctx.measureText(referenceLabel).width
-      const pillPadX = 5
-      const pillPadY = 2
-      const pillW = refLabelW + pillPadX * 2
-      const pillH = 12 + pillPadY * 2
-      const pillX = markerX - (pillW / 2)
-      const pillY = swY + (swH - pillH) / 2
-
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.35)'
-      ctx.beginPath()
-      ctx.roundRect(pillX, pillY, pillW, pillH, 4)
-      ctx.fill()
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'
-      ctx.lineWidth = 1
-      ctx.stroke()
-
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.95)'
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
-      ctx.fillText(referenceLabel, markerX, swY + swH / 2)
-      ctx.textAlign = 'left'
-    }
-
-    // Values area
-    const textY = swY + swH + 6
-
-    ctx.fillStyle = COLORS.textSecondary
-    ctx.font = `16px ${FONT}`
+    // Pill text
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(refShort, mx, swY + swH / 2)
     ctx.textAlign = 'left'
-    ctx.textBaseline = 'top'
-    ctx.fillText(colorName, x, textY)
+  }
 
-    ctx.fillStyle = COLORS.textMuted
-    ctx.font = `13px ${FONT}`
-    ctx.fillText(`/${dev.referenceHue}\u00B0`, x + 64, textY + 1)
+  cy = swY + swH + 12
 
-    ctx.fillStyle = COLORS.textPrimary
-    ctx.font = `bold 22px ${FONT}`
-    ctx.fillText(`${Math.round(dev.userHue)}\u00B0`, x, textY + 14)
+  // ── Reference value row ──
+  const valSize = 15
 
-    ctx.fillStyle = COLORS.textMuted
-    ctx.font = `12px ${FONT}`
-    ctx.fillText(valueYourLabel, x + 66, textY + 21)
+  ctx.textBaseline = 'top'
+  ctx.textAlign = 'left'
+  ctx.fillStyle = C.muted
+  ctx.font = `400 ${valSize}px ${SANS}`
+  ctx.fillText(refLabel, x, cy)
 
-    // Diff badge
-    const diff = Math.round(dev.difference)
-    const diffStr = diff === 0 ? '\u00B10\u00B0' : diff > 0 ? `+${diff}\u00B0` : `${diff}\u00B0`
-    const diffColor = Math.abs(diff) <= 5 ? '#34d399' : Math.abs(diff) <= 15 ? '#fbbf24' : '#f87171'
-    ctx.fillStyle = diffColor
-    ctx.font = `bold 16px ${FONT}`
-    ctx.textAlign = 'right'
-    ctx.fillText(diffStr, swX + swW, textY + 22)
-    ctx.textAlign = 'left'
-  })
+  ctx.textAlign = 'right'
+  ctx.fillStyle = 'rgba(232, 230, 240, 0.5)'
+  ctx.font = `400 ${valSize}px ${MONO}`
+  ctx.fillText(`${dev.referenceHue}\u00B0`, x + w, cy)
+
+  cy += valSize + 6
+
+  // ── Measured value row ──
+  ctx.textAlign = 'left'
+  ctx.fillStyle = C.muted
+  ctx.font = `400 ${valSize}px ${SANS}`
+  ctx.fillText(measLabel, x, cy)
+
+  ctx.textAlign = 'right'
+  ctx.fillStyle = C.text
+  ctx.font = `600 ${valSize}px ${MONO}`
+  ctx.fillText(`${Math.round(dev.userHue)}\u00B0`, x + w, cy)
+
+  cy += valSize + 10
+
+  // ── Diff badge ──
+  const diff = Math.round(dev.difference)
+  const diffStr = diff === 0 ? '\u00B10\u00B0' : diff > 0 ? `+${diff}\u00B0` : `${diff}\u00B0`
+  const diffColor = Math.abs(diff) <= 5 ? '#34d399' : Math.abs(diff) <= 15 ? '#fbbf24' : '#f87171'
+
+  ctx.textAlign = 'right'
+  ctx.fillStyle = diffColor
+  ctx.font = `700 ${valSize + 1}px ${MONO}`
+  ctx.fillText(diffStr, x + w, cy)
+  ctx.textAlign = 'left'
 }
 
-function formatYourColorLabel(colorName: string, locale: Locale): string {
-  const template = YOUR_COLOR_LABEL_TEMPLATE[locale] ?? YOUR_COLOR_LABEL_TEMPLATE.en
-  return template.replace('{color}', colorName)
-}
+// ── Footer ──
 
-function drawFooter(ctx: CanvasRenderingContext2D): void {
-  // Divider line
-  ctx.strokeStyle = COLORS.border
+function drawFooter(ctx: CanvasRenderingContext2D, locale: Locale): void {
+  const dividerY = H - 120
+  const textY = H - 76
+
+  ctx.strokeStyle = C.border
   ctx.lineWidth = 1
   ctx.setLineDash([])
   ctx.beginPath()
-  ctx.moveTo(80, CARD_HEIGHT - 70)
-  ctx.lineTo(CARD_WIDTH - 80, CARD_HEIGHT - 70)
+  ctx.moveTo(PAD, dividerY)
+  ctx.lineTo(W - PAD, dividerY)
   ctx.stroke()
 
-  // URL
-  ctx.fillStyle = COLORS.textMuted
-  ctx.font = `18px ${FONT}`
-  ctx.textAlign = 'left'
+  ctx.fillStyle = C.muted
+  ctx.font = `400 22px ${SANS}`
   ctx.textBaseline = 'middle'
-  ctx.fillText('rwe.kr/spectrumsense', 80, CARD_HEIGHT - 38)
 
-  // Tagline
+  ctx.textAlign = 'left'
+  ctx.fillText('rwe.kr/spectrumsense', PAD, textY)
+
   ctx.textAlign = 'right'
-  ctx.fillText('Discover Your Color Perception Centers', CARD_WIDTH - 80, CARD_HEIGHT - 38)
+  ctx.fillText(tl(locale, 'results.citation'), W - PAD, textY)
 }
+
+// ── Utilities ──
+
+function tl(
+  locale: Locale,
+  key: string,
+  vars: Record<string, string> = {},
+): string {
+  const dict = LOCALE_MESSAGES[locale] ?? LOCALE_MESSAGES.en
+  const template = dict[key] ?? key
+  return Object.entries(vars).reduce(
+    (acc, [name, value]) => acc.replaceAll(`{${name}}`, value),
+    template,
+  )
+}
+
+function colorLabel(locale: Locale, color: string): string {
+  return tl(locale, `colors.${color}`)
+}
+
+function shrinkFont(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  weight: string,
+  family: string,
+  maxW: number,
+  preferred: number,
+  min: number,
+): number {
+  let s = preferred
+  while (s > min) {
+    ctx.font = `${weight} ${s}px ${family}`
+    if (ctx.measureText(text).width <= maxW) break
+    s--
+  }
+  return s
+}
+
+// ── Download ──
 
 /**
  * Trigger a PNG download of the result card.
- * Uses anchor click to force file download (not open in tab).
  */
-export function downloadResultCard(canvas: HTMLCanvasElement): void {
+export function downloadResultCard(
+  canvas: HTMLCanvasElement,
+  filename: string = DEFAULT_DOWNLOAD_FILENAME,
+): void {
   const link = document.createElement('a')
-  link.download = 'spectrumsense-result.png'
+  link.download = forceExtension(filename, 'png')
   link.href = canvas.toDataURL('image/png')
   link.click()
+}
+
+/**
+ * Generate and download a result card.
+ * Awaits font loading to ensure web fonts are available for canvas rendering.
+ */
+export async function downloadGeneratedResultCard(
+  result: TestResult,
+  locale: Locale = 'en',
+  options: ResultCardOptions = {},
+  deps: ResultCardDownloadDeps = {},
+): Promise<void> {
+  if (typeof document !== 'undefined' && document.fonts?.ready) {
+    await document.fonts.ready
+  }
+
+  const filename = options.filename ?? DEFAULT_DOWNLOAD_FILENAME
+  const generateCard = deps.generateCard ?? generateResultCard
+  const downloadCard = deps.downloadCard ?? downloadResultCard
+  const canvas = generateCard(result, locale, options)
+  downloadCard(canvas, filename)
+}
+
+function forceExtension(filename: string, extension: 'png'): string {
+  const base = filename.replace(/\.(png|svg)$/i, '')
+  return `${base}.${extension}`
 }

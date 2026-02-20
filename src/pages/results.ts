@@ -4,7 +4,7 @@ import { computeDeviations, summarizeResults } from '../result'
 import { sampleHueRange, huePositionInRange, getColorHsl } from '../color'
 import { getColorRegions } from '../result'
 import { renderSpectrumBar } from '../canvas/spectrum-bar'
-import { generateResultCard, downloadResultCard } from '../canvas/result-card'
+import { downloadGeneratedResultCard } from '../canvas/result-card'
 import { shareWebApi, copyToClipboard, isWebShareSupported } from '../sharing'
 import { t, getCurrentLocale } from '../i18n/index'
 
@@ -117,7 +117,7 @@ export function renderResults(container: HTMLElement): void {
   ro.observe(canvas)
 
   renderDeviationGrid(container, deviations, result.boundaries)
-  wireButtons(container, result)
+  wireButtons(container, result, nickname)
 }
 
 function renderDeviationGrid(
@@ -160,9 +160,8 @@ function renderDeviationGrid(
             <div class="deviation-user-swatch" style="background: ${userRangeGradient}"></div>
             ${isReferenceInRange
               ? `<span class="deviation-reference-marker-wrap" style="left: ${referencePositionPct.toFixed(2)}%">
-                   <span class="deviation-reference-triangle deviation-reference-triangle--top"></span>
+                   <span class="deviation-reference-line"></span>
                    <span class="deviation-reference-inside-label">${t('results.reference_short')}</span>
-                   <span class="deviation-reference-triangle deviation-reference-triangle--bottom"></span>
                  </span>`
               : ''
             }
@@ -196,6 +195,7 @@ function buildHueRangeGradient(startHue: number, endHue: number): string {
 function wireButtons(
   container: HTMLElement,
   result: TestResult,
+  nickname: string,
 ): void {
   container.querySelector('#btn-retake')?.addEventListener('click', () => {
     window.location.hash = '#/test'
@@ -214,10 +214,9 @@ function wireButtons(
     }
   })
 
-  container.querySelector('#btn-download')?.addEventListener('click', () => {
+  container.querySelector('#btn-download')?.addEventListener('click', async () => {
     const locale = getCurrentLocale()
-    const card = generateResultCard(result, locale)
-    downloadResultCard(card)
+    await downloadGeneratedResultCard(result, locale, { nickname })
   })
 }
 
@@ -368,20 +367,18 @@ function injectResultsStyles(): void {
     }
 
     .deviation-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      display: flex;
+      flex-wrap: wrap;
       gap: 1rem;
+      justify-content: center;
     }
 
     @media (max-width: 768px) {
       .deviation-grid {
-        grid-template-columns: repeat(2, 1fr);
         gap: 0.75rem;
       }
-      .deviation-card:last-child:nth-child(2n+1) {
-        grid-column: 1 / -1;
-        max-width: 50%;
-        justify-self: center;
+      .deviation-card {
+        width: calc((100% - 0.75rem) / 2);
       }
     }
 
@@ -396,12 +393,12 @@ function injectResultsStyles(): void {
         font-size: 1.25rem;
       }
       .deviation-grid {
-        grid-template-columns: repeat(2, 1fr);
         gap: 0.625rem;
       }
       .deviation-card {
         padding: 1rem;
         gap: 0.625rem;
+        width: calc((100% - 0.625rem) / 2);
       }
       .deviation-color-label {
         font-size: 0.6875rem;
@@ -413,9 +410,13 @@ function injectResultsStyles(): void {
         font-size: 0.6875rem;
         padding: 0.125rem 0.3125rem;
       }
-      .deviation-reference-triangle {
-        border-left-width: 5px;
-        border-right-width: 5px;
+      .deviation-reference-marker-wrap {
+        width: 2.8px;
+      }
+      .deviation-reference-line {
+        --marker-gap: 8px;
+        --marker-outer-width: 2.4px;
+        --marker-inner-width: 1.2px;
       }
       .deviation-out-of-range-inline {
         font-size: 0.6875rem;
@@ -430,10 +431,7 @@ function injectResultsStyles(): void {
         font-size: 0.8125rem;
         padding: 0.1875rem 0.5rem;
       }
-      .deviation-card:last-child:nth-child(2n+1) {
-        max-width: 100%;
-        justify-self: stretch;
-      }
+
     }
 
     .deviation-card {
@@ -441,6 +439,8 @@ function injectResultsStyles(): void {
       flex-direction: column;
       gap: 0.875rem;
       animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+      width: calc((100% - 3rem) / 4);
+      min-width: 0;
     }
 
     .deviation-user-color {
@@ -486,8 +486,62 @@ function injectResultsStyles(): void {
       top: 0;
       bottom: 0;
       transform: translateX(-50%);
-      width: 0;
+      width: 3.2px;
       pointer-events: none;
+    }
+
+    .deviation-reference-line {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      transform: translateX(-50%);
+      width: var(--marker-outer-width);
+      border-radius: 999px;
+      --marker-gap: 8px;
+      --marker-outer-width: 2.8px;
+      --marker-inner-width: 1.4px;
+      background:
+        linear-gradient(
+          180deg,
+          rgba(12, 14, 24, 0) 0%,
+          rgba(12, 14, 24, 0.52) 18%,
+          rgba(12, 14, 24, 0.52) 82%,
+          rgba(12, 14, 24, 0) 100%
+        ) center top / 100% calc(50% - var(--marker-gap)) no-repeat,
+        linear-gradient(
+          180deg,
+          rgba(12, 14, 24, 0) 0%,
+          rgba(12, 14, 24, 0.52) 18%,
+          rgba(12, 14, 24, 0.52) 82%,
+          rgba(12, 14, 24, 0) 100%
+        ) center bottom / 100% calc(50% - var(--marker-gap)) no-repeat;
+    }
+
+    .deviation-reference-line::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      transform: translateX(-50%);
+      width: var(--marker-inner-width);
+      border-radius: 999px;
+      pointer-events: none;
+      background: linear-gradient(
+        180deg,
+          rgba(255, 255, 255, 0) 0%,
+          rgba(255, 255, 255, 0.86) 18%,
+          rgba(255, 255, 255, 0.86) 82%,
+          rgba(255, 255, 255, 0) 100%
+        ) center top / 100% calc(50% - var(--marker-gap)) no-repeat,
+        linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0) 0%,
+          rgba(255, 255, 255, 0.86) 18%,
+          rgba(255, 255, 255, 0.86) 82%,
+          rgba(255, 255, 255, 0) 100%
+        ) center bottom / 100% calc(50% - var(--marker-gap)) no-repeat;
     }
 
     .deviation-reference-inside-label {
@@ -501,33 +555,13 @@ function injectResultsStyles(): void {
       font-family: var(--font-mono);
       padding: 0.125rem 0.375rem;
       border-radius: var(--radius-sm);
-      background: rgba(15, 23, 42, 0.35);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(15, 23, 42, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.28);
       white-space: nowrap;
       letter-spacing: 0.01em;
       margin: 0;
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
-    }
-
-    .deviation-reference-triangle {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 0;
-      height: 0;
-      border-left: 6px solid transparent;
-      border-right: 6px solid transparent;
-      filter: drop-shadow(0 0 1px rgba(15, 23, 42, 0.85));
-    }
-
-    .deviation-reference-triangle--top {
-      top: 0;
-      border-top: 9px solid rgba(255, 255, 255, 0.98);
-    }
-
-    .deviation-reference-triangle--bottom {
-      bottom: 0;
-      border-bottom: 9px solid rgba(255, 255, 255, 0.98);
+      z-index: 1;
     }
 
     .deviation-out-of-range-inline {
@@ -660,6 +694,7 @@ function injectResultsStyles(): void {
       display: flex;
       gap: 0.75rem;
       flex-wrap: wrap;
+      justify-content: center;
     }
 
     .actions-row .btn-primary {

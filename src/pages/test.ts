@@ -83,9 +83,9 @@ function showEnvironmentCheck(
         <div class="test-env-how">
           <h3 class="test-env-how-title">${t('landing.how_title')}</h3>
           <ol class="test-env-how-steps">
-            <li>${t('landing.how_step1')}</li>
-            <li>${t('landing.how_step2')}</li>
-            <li>${t('landing.how_step3')}</li>
+            <li><span class="test-env-how-num">1</span><span>${t('landing.how_step1')}</span></li>
+            <li><span class="test-env-how-num">2</span><span>${t('landing.how_step2')}</span></li>
+            <li><span class="test-env-how-num">3</span><span>${t('landing.how_step3')}</span></li>
           </ol>
         </div>
 
@@ -397,10 +397,10 @@ function injectTestStyles(): void {
       align-items: center;
       gap: 0.375rem;
       padding: 0.5rem 0.875rem;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: transparent;
+      border: 1px solid var(--border);
       border-radius: var(--radius-sm, 8px);
-      color: rgba(255, 255, 255, 0.5);
+      color: var(--text-muted);
       font-family: var(--font-sans, 'Outfit', sans-serif);
       font-size: 0.8125rem;
       font-weight: 400;
@@ -410,9 +410,9 @@ function injectTestStyles(): void {
     }
 
     .test-back-btn:hover {
-      color: rgba(255, 255, 255, 0.8);
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(255, 255, 255, 0.18);
+      color: var(--text-primary);
+      background: var(--bg-card);
+      border-color: var(--border-accent);
     }
 
     .test-env-check {
@@ -421,7 +421,7 @@ function injectTestStyles(): void {
       align-items: center;
       justify-content: safe center;
       gap: 1.75rem;
-      padding: 3.5rem 2rem 2rem;
+      padding: 4.5rem 2rem 2rem;
       text-align: center;
       width: 100%;
       height: 100%;
@@ -434,7 +434,7 @@ function injectTestStyles(): void {
       font-family: var(--font-display, 'Instrument Serif', Georgia, serif);
       font-size: 2rem;
       font-weight: 400;
-      color: #ffffff;
+      color: var(--text-primary);
       margin: 0;
     }
 
@@ -445,7 +445,7 @@ function injectTestStyles(): void {
       display: flex;
       flex-direction: column;
       gap: 0.625rem;
-      color: rgba(255, 255, 255, 0.75);
+      color: var(--text-secondary);
       font-size: 1rem;
       font-weight: 300;
       line-height: 1.6;
@@ -461,14 +461,14 @@ function injectTestStyles(): void {
 
     .test-env-list li::before {
       content: '→';
-      color: rgba(255, 255, 255, 0.35);
+      color: var(--text-muted);
       flex-shrink: 0;
     }
 
     .test-env-divider {
       width: 40px;
       height: 1px;
-      background: rgba(255, 255, 255, 0.08);
+      background: var(--border);
     }
 
     .test-env-how {
@@ -483,7 +483,7 @@ function injectTestStyles(): void {
       font-family: var(--font-sans, 'Outfit', sans-serif);
       font-size: 0.75rem;
       font-weight: 600;
-      color: rgba(255, 255, 255, 0.5);
+      color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.08em;
       margin: 0;
@@ -491,13 +491,12 @@ function injectTestStyles(): void {
 
     .test-env-how-steps {
       list-style: none;
-      counter-reset: how-step;
       padding: 0;
       margin: 0;
       display: flex;
       flex-direction: column;
       gap: 0.375rem;
-      color: rgba(255, 255, 255, 0.6);
+      color: var(--text-secondary);
       font-size: 0.875rem;
       font-weight: 300;
       line-height: 1.6;
@@ -505,19 +504,26 @@ function injectTestStyles(): void {
     }
 
     .test-env-how-steps li {
-      counter-increment: how-step;
       display: flex;
-      gap: 0.5rem;
+      align-items: flex-start;
+      gap: 0.875rem;
     }
 
-    .test-env-how-steps li::before {
-      content: counter(how-step) '.';
-      color: rgba(255, 255, 255, 0.35);
-      font-family: var(--font-mono, 'JetBrains Mono', monospace);
-      font-size: 0.75rem;
+    .test-env-how-num {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
       flex-shrink: 0;
-      min-width: 1.25rem;
-      padding-top: 0.1rem;
+      border-radius: 50%;
+      background: var(--accent-dim);
+      border: 1px solid var(--border-accent);
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      font-weight: 500;
+      color: var(--accent);
+      margin-top: 0.1rem;
     }
 
     .test-env-how-note {
@@ -541,7 +547,7 @@ function injectTestStyles(): void {
       font-family: var(--font-sans, 'Outfit', sans-serif);
       font-size: 0.75rem;
       font-weight: 600;
-      color: rgba(255, 255, 255, 0.5);
+      color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.08em;
     }
@@ -551,9 +557,9 @@ function injectTestStyles(): void {
       max-width: 280px;
       padding: 0.75rem 1rem;
       border-radius: var(--radius-md, 12px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      background: rgba(255, 255, 255, 0.04);
-      color: #ffffff;
+      border: 1px solid var(--border);
+      background: var(--accent-glow);
+      color: var(--text-primary);
       font-family: var(--font-sans, 'Outfit', sans-serif);
       font-size: 1rem;
       font-weight: 400;
@@ -563,26 +569,26 @@ function injectTestStyles(): void {
     }
 
     .test-env-nickname-input::placeholder {
-      color: rgba(255, 255, 255, 0.3);
+      color: var(--text-muted);
     }
 
     .test-env-nickname-input:focus {
-      border-color: rgba(45, 212, 191, 0.4);
-      background: rgba(255, 255, 255, 0.06);
-      box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.08);
+      border-color: var(--border-accent);
+      background: var(--accent-dim);
+      box-shadow: 0 0 0 3px var(--accent-glow);
     }
 
     .test-env-disclaimer {
       font-size: 0.8125rem;
-      color: rgba(255, 255, 255, 0.45);
+      color: var(--text-muted);
       line-height: 1.7;
       max-width: 440px;
       text-align: center;
       font-weight: 300;
       padding: 0.875rem 1.25rem;
-      background: rgba(255, 255, 255, 0.02);
+      background: var(--bg-secondary);
       border-radius: var(--radius-sm, 8px);
-      border: 1px solid rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
     }
 
     .test-env-details {
@@ -636,7 +642,7 @@ function injectTestStyles(): void {
       font-family: var(--font-display, 'Instrument Serif', Georgia, serif);
       font-size: 2.75rem;
       font-weight: 400;
-      color: #ffffff;
+      color: var(--text-primary);
       margin: 0;
       letter-spacing: -0.01em;
       animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -646,7 +652,7 @@ function injectTestStyles(): void {
     .test-confirmation-prompt {
       font-size: 1rem;
       font-weight: 300;
-      color: rgba(255, 255, 255, 0.5);
+      color: var(--text-muted);
       margin: 0;
       max-width: 340px;
       line-height: 1.6;
@@ -735,7 +741,7 @@ function injectTestStyles(): void {
       font-family: var(--font-display, 'Instrument Serif', Georgia, serif);
       font-size: 2rem;
       font-weight: 400;
-      color: #ffffff;
+      color: var(--text-primary);
       margin: 0;
       animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
       animation-delay: 0.1s;
@@ -744,7 +750,7 @@ function injectTestStyles(): void {
     .test-warmup-complete-message {
       font-size: 1rem;
       font-weight: 300;
-      color: rgba(255, 255, 255, 0.5);
+      color: var(--text-muted);
       margin: 0;
       max-width: 340px;
       line-height: 1.6;
@@ -754,20 +760,20 @@ function injectTestStyles(): void {
 
     .test-confirmation-btn-secondary {
       background: transparent;
-      color: rgba(255, 255, 255, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
     }
 
     .test-confirmation-btn-secondary:hover {
-      color: rgba(255, 255, 255, 0.7);
-      background: rgba(255, 255, 255, 0.04);
-      border-color: rgba(255, 255, 255, 0.18);
+      color: var(--text-secondary);
+      background: var(--bg-card);
+      border-color: var(--border-accent);
     }
 
     @media (max-width: 480px) {
       .test-env-check {
         gap: 1.25rem;
-        padding: 3rem 1.25rem 1.5rem;
+        padding: 4rem 1.25rem 1.5rem;
         justify-content: flex-start;
       }
       .test-env-title {
@@ -801,7 +807,7 @@ function injectTestStyles(): void {
       .test-page {
         width: 100%;
         height: 100%;
-        border-radius: 0;
+        border-radius: var(--radius-sm, 8px);
       }
 
       .test-choices {

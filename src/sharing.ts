@@ -92,9 +92,3 @@ export function isWebShareSupported(): boolean {
   return typeof navigator !== 'undefined' && 'share' in navigator
 }
 
-/**
- * Get the shareable URL for a result (convenience wrapper).
- */
-export function getShareUrl(result: TestResult): string {
-  return buildShareUrl(result)
-}

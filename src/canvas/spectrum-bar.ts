@@ -9,6 +9,7 @@ import {
 } from '../color'
 import type { ColorName } from '../types'
 import { getColorRegions } from '../result'
+import { createFadeGradient } from './gradient'
 
 export interface SpectrumBarOptions {
   colorLabels?: string[]
@@ -204,20 +205,18 @@ function drawColorBar(
   ctx.fillStyle = vignetteR
   ctx.fillRect(x + w - 24, y, 24, h)
 
-  // 3. Boundary lines
+  // 3. Boundary lines (vertical fade for softer look)
   for (const b of boundaries.map(normalizeHue)) {
     const bx = x + (b / 360) * w
 
-    // Outer dark stroke keeps contrast on bright hues (yellow/green/cyan).
-    ctx.strokeStyle = 'rgba(12, 14, 24, 0.52)'
+    ctx.strokeStyle = createFadeGradient(ctx, 0, y, 0, y + h, 'dark')
     ctx.lineWidth = 2.8
     ctx.beginPath()
     ctx.moveTo(bx, y)
     ctx.lineTo(bx, y + h)
     ctx.stroke()
 
-    // Inner bright stroke gives a crisp boundary center.
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.86)'
+    ctx.strokeStyle = createFadeGradient(ctx, 0, y, 0, y + h, 'light')
     ctx.lineWidth = 1.4
     ctx.beginPath()
     ctx.moveTo(bx, y)
