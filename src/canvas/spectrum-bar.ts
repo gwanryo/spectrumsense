@@ -14,6 +14,7 @@ const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
 /**
  * Render a single user color-boundary bar with standard-color reference markers below.
  * - Top: row label + hue gradient bar with user's boundary lines and region labels
+ * - Middle: 0°..360° hue scale for easier reading
  * - Bottom row: small ▲ arrows at standard color positions with labels
  */
 export function renderSpectrumBar(
@@ -44,8 +45,9 @@ export function renderSpectrumBar(
   const barY = 20
   const belowBarSpace = isNarrow ? 62 : 52 // extra space for staggered labels
   const barH = H - barY - belowBarSpace
-  const refArrowY = barY + barH + 8  // ▲ arrows below bar
-  const refLabelY = refArrowY + 12   // color name labels
+  const hueScaleY = barY + barH + 2
+  const refArrowY = hueScaleY + 12   // ▲ arrows below hue scale
+  const refLabelY = refArrowY + 8    // color name labels
   const refRowLabelY = refLabelY + (isNarrow ? 26 : 16) // "기준 색 위치"
 
   // 1. Row label
@@ -58,15 +60,55 @@ export function renderSpectrumBar(
   // 2. User bar
   drawColorBar(ctx, userBoundaries, 0, barY, W, barH, colorLabels)
 
-  // 3. Reference markers below bar (standard color positions)
+  // 3. 0°..360° scale for the user boundary row
+  drawHueScale(ctx, 0, barY, W, barH, hueScaleY)
+
+  // 4. Reference markers below bar (standard color positions)
   drawReferenceMarkers(ctx, W, refLabelY, refArrowY, colorLabels)
 
-  // 4. Reference row label
+  // 5. Reference row label
   ctx.font = `500 13px ${FONT}`
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
   ctx.fillStyle = '#8e8da6'
   ctx.fillText(labelReference, W / 2, refRowLabelY)
+}
+
+// ── User hue scale ──
+
+function drawHueScale(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  labelY: number,
+): void {
+  const isNarrow = w < 500
+  const ticks = isNarrow ? [0, 90, 180, 270, 360] : [0, 60, 120, 180, 240, 300, 360]
+  const tickTop = y + h
+  const tickBottom = tickTop + 3
+  const minInset = isNarrow ? 11 : 14
+
+  ctx.strokeStyle = '#6b6a85'
+  ctx.lineWidth = 1
+
+  ctx.font = `500 ${isNarrow ? 9 : 10}px ${FONT}`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'top'
+  ctx.fillStyle = '#6b6a85'
+
+  for (const tick of ticks) {
+    const px = x + (tick / 360) * w
+    const clampedX = Math.max(x + minInset, Math.min(x + w - minInset, px))
+
+    ctx.beginPath()
+    ctx.moveTo(px, tickTop)
+    ctx.lineTo(px, tickBottom)
+    ctx.stroke()
+
+    ctx.fillText(`${tick}\u00B0`, clampedX, labelY)
+  }
 }
 
 // ── Reference markers ──
