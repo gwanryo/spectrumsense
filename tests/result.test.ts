@@ -1,9 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { computeDeviations, getColorRegions, summarizeResults } from '../src/result'
-import { BOUNDARIES } from '../src/color'
+import { BOUNDARIES, COLOR_ORDER, STANDARD_COLORS } from '../src/color'
 
 const standardBoundaries = BOUNDARIES.map(b => b.standardHue)
 // [20, 50, 90, 180, 270, 325, 355]
+
+function deviationMap(boundaries: number[]) {
+  return new Map(computeDeviations(boundaries).map(d => [d.color, d]))
+}
 
 describe('computeDeviations', () => {
   it('returns zero deviation for exact standard boundaries', () => {
@@ -14,64 +18,61 @@ describe('computeDeviations', () => {
     }
   })
 
-  it('returns correct positive deviation for clockwise shift', () => {
-    // User sees Red→Orange at 28° instead of 20° (+8° clockwise)
+  it('uses STANDARD_COLORS as the reference hue for each color', () => {
+    const deviations = computeDeviations(standardBoundaries)
+    for (const d of deviations) {
+      expect(d.standardHue).toBe(STANDARD_COLORS[d.color])
+    }
+  })
+
+  it('reflects clockwise shift on adjacent color centers', () => {
     const shifted = [...standardBoundaries]
     shifted[0] = 28
-    const deviations = computeDeviations(shifted)
-    expect(deviations[0].difference).toBeCloseTo(8, 0)
-    expect(deviations[0].userHue).toBe(28)
-    expect(deviations[0].standardHue).toBe(20)
+    const byColor = deviationMap(shifted)
+
+    expect(byColor.get('red')!.difference).toBeGreaterThan(0)
+    expect(byColor.get('orange')!.difference).toBeGreaterThan(0)
+    expect(Math.abs(byColor.get('blue')!.difference)).toBeCloseTo(0, 5)
   })
 
-  it('returns correct negative deviation for counter-clockwise shift', () => {
-    // User sees Orange→Yellow at 38° instead of 50° (-12° counter-clockwise)
+  it('reflects counter-clockwise shift on adjacent color centers', () => {
     const shifted = [...standardBoundaries]
     shifted[1] = 38
-    const deviations = computeDeviations(shifted)
-    expect(deviations[1].difference).toBeCloseTo(-12, 0)
+    const byColor = deviationMap(shifted)
+
+    expect(byColor.get('orange')!.difference).toBeLessThan(0)
+    expect(byColor.get('yellow')!.difference).toBeLessThan(0)
+    expect(Math.abs(byColor.get('violet')!.difference)).toBeCloseTo(0, 5)
   })
 
-  it('CRITICAL: handles circular distance for Pink→Red boundary', () => {
-    // Standard Pink→Red is at 355°
-    // User sees it at 5° — that's +10° clockwise (not -350°)
+  it('handles Pink→Red wrap-around as a small circular shift', () => {
     const shifted = [...standardBoundaries]
     shifted[6] = 5
-    const deviations = computeDeviations(shifted)
-    // circularDistance(355, 5) should be +10° (clockwise), not -350°
-    expect(deviations[6].difference).toBeCloseTo(10, 0)
-    expect(Math.abs(deviations[6].difference)).toBeLessThan(180)
+    const byColor = deviationMap(shifted)
+
+    const redDiff = byColor.get('red')!.difference
+    const pinkDiff = byColor.get('pink')!.difference
+
+    expect(redDiff).toBeGreaterThan(0)
+    expect(pinkDiff).toBeGreaterThan(0)
+    expect(Math.abs(redDiff)).toBeLessThan(180)
+    expect(Math.abs(pinkDiff)).toBeLessThan(180)
   })
 
-  it('CRITICAL: user=5° vs standard=355° → small positive difference (~10°)', () => {
-    // This is the specific test case from the plan
-    const boundaries = [...standardBoundaries]
-    boundaries[6] = 5 // user boundary at 5°
-    // Standard for Pink→Red is 355°
-    // We need to test circularDistance(355, 5) = +10°
-    // Use a custom test: deviation should be small, not large
-    const deviations = computeDeviations(boundaries)
-    // deviation[6]: circularDistance(355, 5) = +10° (not -350°)
-    expect(Math.abs(deviations[6].difference)).toBeLessThan(180)
-    expect(deviations[6].difference).toBeGreaterThan(0) // clockwise shift
-  })
-
-  it('returns 7 deviations for 7 boundaries', () => {
+  it('returns 7 deviations in COLOR_ORDER', () => {
     const deviations = computeDeviations(standardBoundaries)
     expect(deviations).toHaveLength(7)
-    expect(deviations[0].color).toBe('red')
-    expect(deviations[5].color).toBe('violet')
-    expect(deviations[6].color).toBe('pink')
+    expect(deviations.map(d => d.color)).toEqual(COLOR_ORDER)
   })
 
   it('falls back to standard hues when input has fewer than 7 boundaries', () => {
     const partial = [20, 50]
     const deviations = computeDeviations(partial)
     expect(deviations).toHaveLength(7)
-    expect(deviations[0].userHue).toBe(20)
-    expect(deviations[1].userHue).toBe(50)
-    expect(deviations[2].userHue).toBe(BOUNDARIES[2].standardHue)
-    expect(deviations[6].userHue).toBe(BOUNDARIES[6].standardHue)
+    for (const d of deviations) {
+      expect(d.standardHue).toBe(STANDARD_COLORS[d.color])
+      expect(d.difference).toBeCloseTo(0, 5)
+    }
   })
 })
 
@@ -113,23 +114,24 @@ describe('getColorRegions', () => {
 describe('summarizeResults', () => {
   it('computes mean absolute deviation', () => {
     const deviations = computeDeviations(standardBoundaries)
-    const summary = summarizeResults(deviations)
+    const summary = summarizeResults(deviations, standardBoundaries)
     expect(summary.meanAbsoluteDeviation).toBeCloseTo(0, 5)
   })
 
-  it('identifies most shifted boundary', () => {
+  it('identifies most shifted color', () => {
     const shifted = [...standardBoundaries]
     shifted[2] = 110 // Yellow→Green shifted by +20°
     const deviations = computeDeviations(shifted)
-    const summary = summarizeResults(deviations)
-    expect(summary.mostShifted.color).toBe('yellow')
+    const summary = summarizeResults(deviations, shifted)
+    expect(summary.mostShifted.color).toBe('green')
   })
 
   it('includes color regions', () => {
     const deviations = computeDeviations(standardBoundaries)
-    const summary = summarizeResults(deviations)
+    const summary = summarizeResults(deviations, standardBoundaries)
     expect(summary.colorRegions).toHaveLength(7)
+    const totalSpan = summary.colorRegions.reduce((sum, r) => sum + r.spanDegrees, 0)
+    expect(totalSpan).toBeCloseTo(360, 0)
   })
 })
-
 

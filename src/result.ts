@@ -1,14 +1,33 @@
 import type { Deviation, ColorRegion, ResultSummary } from './types'
-import { BOUNDARIES, circularDistance, normalizeHue } from './color'
+import {
+  BOUNDARIES,
+  COLOR_ORDER,
+  STANDARD_COLORS,
+  circularDistance,
+  normalizeHue,
+  computeRegionCenter,
+} from './color'
 
 export function computeDeviations(userBoundaries: number[]): Deviation[] {
-  return BOUNDARIES.map((boundary, i) => {
-    const userHue = normalizeHue(userBoundaries[i] ?? boundary.standardHue)
-    const standardHue = boundary.standardHue
+  const normalizedBoundaries = BOUNDARIES.map((boundary, i) =>
+    normalizeHue(userBoundaries[i] ?? boundary.standardHue)
+  )
+  const regions = getColorRegions(normalizedBoundaries)
+  const regionByColor = new Map(regions.map((region, i) => [region.name, i]))
+
+  return COLOR_ORDER.map((color) => {
+    const regionIndex = regionByColor.get(color)
+    if (regionIndex === undefined) {
+      throw new Error(`Missing color region for ${color}`)
+    }
+
+    const region = regions[regionIndex]
+    const userHue = computeRegionCenter(regionIndex, region.startHue, region.endHue)
+    const standardHue = STANDARD_COLORS[color]
     const difference = circularDistance(standardHue, userHue)
 
     return {
-      color: boundary.from,
+      color,
       userHue,
       standardHue,
       difference,
@@ -48,7 +67,10 @@ export function getColorRegions(userBoundaries: number[]): ColorRegion[] {
 /**
  * Aggregate deviation statistics into a summary.
  */
-export function summarizeResults(deviations: Deviation[]): ResultSummary {
+export function summarizeResults(
+  deviations: Deviation[],
+  userBoundaries?: number[],
+): ResultSummary {
   const meanAbsoluteDeviation =
     deviations.reduce((sum, d) => sum + Math.abs(d.difference), 0) / deviations.length
 
@@ -56,7 +78,7 @@ export function summarizeResults(deviations: Deviation[]): ResultSummary {
     Math.abs(d.difference) > Math.abs(max.difference) ? d : max
   )
 
-  const colorRegions = getColorRegions(deviations.map(d => d.userHue))
+  const colorRegions = getColorRegions(userBoundaries ?? deviations.map(d => d.userHue))
 
   return {
     deviations,

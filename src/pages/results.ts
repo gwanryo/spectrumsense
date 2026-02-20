@@ -17,7 +17,7 @@ export function renderResults(container: HTMLElement): void {
   }
 
   const deviations = computeDeviations(result.boundaries)
-  const summary = summarizeResults(deviations)
+  const summary = summarizeResults(deviations, result.boundaries)
 
   const nickname = sessionStorage.getItem('spectrumsense-nickname') ?? ''
 

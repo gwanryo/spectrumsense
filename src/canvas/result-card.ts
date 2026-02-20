@@ -40,7 +40,7 @@ export function generateResultCard(
   drawBackground(ctx)
   drawHeader(ctx, nickname)
   drawMiniSpectrumBar(ctx, result.boundaries, locale)
-  drawSummaryStats(ctx, deviations, locale)
+  drawSummaryStats(ctx, deviations, result.boundaries, locale)
   drawBoundaryStats(ctx, deviations, result.boundaries, locale)
   drawFooter(ctx)
 
@@ -266,9 +266,10 @@ function drawMiniSpectrumBar(
 function drawSummaryStats(
   ctx: CanvasRenderingContext2D,
   deviations: Deviation[],
+  userBoundaries: number[],
   locale: Locale
 ): void {
-  const summary = summarizeResults(deviations)
+  const summary = summarizeResults(deviations, userBoundaries)
   const y = SUMMARY_CARD_Y
   const cardX = 80
   const cardW = (CARD_WIDTH - 160 - 16) / 2  // two cards with 16px gap
