@@ -627,7 +627,7 @@ function drawBoundaryCell(
     ctx.fillStyle = 'rgba(255, 255, 255, 0.95)'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    ctx.fillText(refShort, mx, swY + swH / 2)
+    ctx.fillText(refShort, pX + pW / 2, swY + swH / 2)
     ctx.textAlign = 'left'
   }
 
