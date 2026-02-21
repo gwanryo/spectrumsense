@@ -373,67 +373,6 @@ function injectResultsStyles(): void {
       justify-content: center;
     }
 
-    @media (max-width: 768px) {
-      .deviation-grid {
-        gap: 0.75rem;
-      }
-      .deviation-card {
-        width: calc((100% - 0.75rem) / 2);
-      }
-    }
-
-    @media (max-width: 480px) {
-      .results-summary {
-        gap: 0.625rem;
-      }
-      .summary-stat {
-        padding: 1rem 0.75rem;
-      }
-      .summary-stat-value {
-        font-size: 1.25rem;
-      }
-      .deviation-grid {
-        gap: 0.625rem;
-      }
-      .deviation-card {
-        padding: 1rem;
-        gap: 0.625rem;
-        width: calc((100% - 0.625rem) / 2);
-      }
-      .deviation-color-label {
-        font-size: 0.6875rem;
-      }
-      .deviation-user-swatch-wrap {
-        height: 42px;
-      }
-      .deviation-reference-inside-label {
-        font-size: 0.6875rem;
-        padding: 0.125rem 0.3125rem;
-      }
-      .deviation-reference-marker-wrap {
-        width: 2.8px;
-      }
-      .deviation-reference-line {
-        --marker-gap: 8px;
-        --marker-outer-width: 2.4px;
-        --marker-inner-width: 1.2px;
-      }
-      .deviation-out-of-range-inline {
-        font-size: 0.6875rem;
-      }
-      .deviation-hue {
-        font-size: 0.875rem;
-      }
-      .deviation-label {
-        font-size: 0.8125rem;
-      }
-      .deviation-diff-badge {
-        font-size: 0.8125rem;
-        padding: 0.1875rem 0.5rem;
-      }
-
-    }
-
     .deviation-card {
       display: flex;
       flex-direction: column;
@@ -441,6 +380,15 @@ function injectResultsStyles(): void {
       animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
       width: calc((100% - 3rem) / 4);
       min-width: 0;
+    }
+
+    @media (max-width: 768px) {
+      .deviation-grid {
+        gap: 0.75rem;
+      }
+      .deviation-card {
+        width: calc((100% - 0.75rem) / 2);
+      }
     }
 
     .deviation-user-color {
@@ -728,8 +676,20 @@ function injectResultsStyles(): void {
         flex-direction: column;
         align-items: flex-start;
       }
+      .results-summary {
+        gap: 0.625rem;
+      }
+      .summary-stat {
+        padding: 1rem 0.75rem;
+      }
       .summary-stat-value {
         font-size: 1.125rem;
+      }
+      .deviation-grid {
+        gap: 0.75rem;
+      }
+      .deviation-card {
+        width: 100%;
       }
       .actions-row {
         display: grid;
