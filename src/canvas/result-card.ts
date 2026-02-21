@@ -16,7 +16,6 @@ import ja from '../i18n/ja.json'
 
 // ── Card dimensions ──
 const W = 1200
-const H = 1350
 const PAD = 72
 const CW = W - PAD * 2
 
@@ -39,9 +38,10 @@ const C = {
 // ── Grid layout for boundary details ──
 const GRID_COLS = 4
 const GRID_GAP = 16
+const CARD_PAD = 10
 const CELL_W = Math.floor((CW - (GRID_COLS - 1) * GRID_GAP) / GRID_COLS)
 const SWATCH_H = 96
-const CELL_H = 200
+const CELL_H = 220
 const GRID_ROW_GAP = 20
 
 const DEFAULT_DOWNLOAD_FILENAME = 'spectrumsense-result.png'
@@ -59,6 +59,33 @@ export interface ResultCardDownloadDeps {
   downloadCard?: (canvas: HTMLCanvasElement, filename?: string) => void
 }
 
+// ── Height computation ──
+
+function computeCardHeight(deviationCount: number, locale: Locale, nickname: string): number {
+  const m = document.createElement('canvas').getContext('2d')!
+  const title = nickname
+    ? tl(locale, 'results.title_with_nickname', { nickname })
+    : tl(locale, 'results.title')
+  let titleSize = 52
+  while (titleSize > 36) {
+    m.font = `400 ${titleSize}px ${SERIF}`
+    if (m.measureText(title).width <= CW) break
+    titleSize -= 2
+  }
+
+  let y = 88
+  y += titleSize + 14 + 20 + 30   // header
+  y += 52                           // gap
+  y += 30 + 88 + 14 + 36 + 24      // spectrum section
+  y += 52                           // gap
+  y += 84                           // summary stats
+  y += 56                           // gap
+  const rows = Math.ceil(deviationCount / GRID_COLS)
+  y += rows * CELL_H + (rows - 1) * GRID_ROW_GAP
+  y += 48 + 80                      // footer gap + footer
+  return y
+}
+
 // ── Main entry ──
 
 export function generateResultCard(
@@ -66,16 +93,17 @@ export function generateResultCard(
   locale: Locale = 'en',
   options: ResultCardOptions = {},
 ): HTMLCanvasElement {
-  const canvas = document.createElement('canvas')
-  canvas.width = W
-  canvas.height = H
-
-  const ctx = canvas.getContext('2d')!
   const deviations = computeDeviations(result.boundaries)
   const regions = getColorRegions(result.boundaries)
   const nick = (options.nickname ?? '').trim()
 
-  drawBackground(ctx)
+  const h = computeCardHeight(deviations.length, locale, nick)
+  const canvas = document.createElement('canvas')
+  canvas.width = W
+  canvas.height = h
+
+  const ctx = canvas.getContext('2d')!
+  drawBackground(ctx, h)
 
   let y = 88
   y = drawHeader(ctx, locale, nick, y)
@@ -84,31 +112,29 @@ export function generateResultCard(
   y += 52
   y = drawSummaryStats(ctx, deviations, result.boundaries, locale, y)
   y += 56
-  drawBoundaryGrid(ctx, deviations, regions, locale, y)
-  drawFooter(ctx, locale)
+  y = drawBoundaryGrid(ctx, deviations, regions, locale, y)
+  drawFooter(ctx, locale, y + 48)
 
   return canvas
 }
 
 // ── Background ──
 
-function drawBackground(ctx: CanvasRenderingContext2D): void {
+function drawBackground(ctx: CanvasRenderingContext2D, h: number): void {
   ctx.fillStyle = C.bg
-  ctx.fillRect(0, 0, W, H)
+  ctx.fillRect(0, 0, W, h)
 
-  // Subtle teal aurora gradient
-  const grad = ctx.createLinearGradient(0, 0, W, H)
+  const grad = ctx.createLinearGradient(0, 0, W, h)
   grad.addColorStop(0, 'rgba(45, 212, 191, 0.05)')
   grad.addColorStop(0.5, 'rgba(0, 0, 0, 0)')
   grad.addColorStop(1, 'rgba(45, 212, 191, 0.02)')
   ctx.fillStyle = grad
-  ctx.fillRect(0, 0, W, H)
+  ctx.fillRect(0, 0, W, h)
 
-  // Outer rounded border
   ctx.strokeStyle = C.border
   ctx.lineWidth = 2
   ctx.beginPath()
-  ctx.roundRect(0, 0, W, H, 16)
+  ctx.roundRect(0, 0, W, h, 16)
   ctx.stroke()
 }
 
@@ -254,15 +280,13 @@ function drawSpectrumSection(
 
   y = barY + barH + 14
 
-  // Reference markers (▲ arrows + color labels, staggered to avoid overlap)
   const arrowSize = 6
-  const refFontSize = 17
+  const refFontSize = 15
   for (let i = 0; i < COLOR_ORDER.length; i++) {
     const color = COLOR_ORDER[i]
     const hue = STANDARD_COLORS[color]
     const cx = barX + (normalizeHue(hue) / 360) * barW
     const clampedX = Math.max(barX + 16, Math.min(barX + barW - 16, cx))
-    const staggerY = i % 2 === 1 ? 14 : 0
 
     ctx.fillStyle = C.muted
     ctx.beginPath()
@@ -276,10 +300,10 @@ function drawSpectrumSection(
     ctx.textAlign = 'center'
     ctx.textBaseline = 'top'
     ctx.fillStyle = C.muted
-    ctx.fillText(colorLabel(locale, color), clampedX, y + arrowSize + 5 + staggerY)
+    ctx.fillText(colorLabel(locale, color), clampedX, y + arrowSize + 5)
   }
 
-  y += arrowSize + 5 + refFontSize + 14 + 14
+  y += arrowSize + 5 + refFontSize + 10
 
   // Bottom legend
   ctx.font = `500 18px ${SANS}`
@@ -415,7 +439,7 @@ function drawSummaryStats(
   return y + cardH
 }
 
-// ── Boundary detail grid (4 + 3 centered) ──
+// ── Boundary detail grid ──
 
 function drawBoundaryGrid(
   ctx: CanvasRenderingContext2D,
@@ -434,7 +458,7 @@ function drawBoundaryGrid(
     if (row === 0) {
       cellX = PAD + col * (CELL_W + GRID_GAP)
     } else {
-      // Center the second row (3 items)
+      // Center the remaining items in the second row
       const count = deviations.length - GRID_COLS
       const rowW = count * CELL_W + (count - 1) * GRID_GAP
       cellX = PAD + (CW - rowW) / 2 + col * (CELL_W + GRID_GAP)
@@ -460,6 +484,8 @@ function drawBoundaryCell(
   y: number,
 ): void {
   const w = CELL_W
+  const innerX = x + CARD_PAD
+  const innerW = w - 2 * CARD_PAD
   const colorName = colorLabel(locale, dev.color)
   const yourLabel = tl(locale, 'results.your_color', { color: colorName })
   const refLabel = tl(locale, 'results.typical_value')
@@ -473,58 +499,80 @@ function drawBoundaryCell(
   const refPosition = huePositionInRange(dev.referenceHue, region.startHue, region.endHue)
   const hasRef = refPosition !== null
 
-  let cy = y
+  ctx.fillStyle = C.card
+  ctx.beginPath()
+  ctx.roundRect(x, y, w, CELL_H, 8)
+  ctx.fill()
+  ctx.strokeStyle = C.border
+  ctx.lineWidth = 1
+  ctx.beginPath()
+  ctx.roundRect(x, y, w, CELL_H, 8)
+  ctx.stroke()
 
-  // ── Color label ──
+  let cy = y + CARD_PAD
+
   ctx.font = `500 16px ${SANS}`
   ctx.textAlign = 'left'
   ctx.textBaseline = 'top'
-  ctx.fillStyle = C.muted
-  ctx.fillText(yourLabel, x, cy, w * 0.62)
+  ctx.fillStyle = C.sub
+  ctx.fillText(yourLabel, innerX, cy, innerW * 0.62)
 
   if (!hasRef) {
-    const outSize = shrinkFont(ctx, outOfRangeLabel, '500', SANS, w * 0.34, 14, 10)
+    const outSize = shrinkFont(ctx, outOfRangeLabel, '500', SANS, innerW * 0.34, 12, 9)
     ctx.font = `500 ${outSize}px ${SANS}`
-    ctx.textAlign = 'right'
-    ctx.fillText(outOfRangeLabel, x + w, cy + 2)
+    const otw = ctx.measureText(outOfRangeLabel).width
+    const opx = 6
+    const opy = 3
+    const obw = otw + opx * 2
+    const obh = outSize + opy * 2
+    const obx = innerX + innerW - obw
+    const oby = cy + 1
+
+    ctx.fillStyle = 'rgba(251, 191, 36, 0.10)'
+    ctx.beginPath()
+    ctx.roundRect(obx, oby, obw, obh, 3)
+    ctx.fill()
+
+    ctx.fillStyle = '#fbbf24'
+    ctx.font = `500 ${outSize}px ${SANS}`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'top'
+    ctx.fillText(outOfRangeLabel, obx + obw / 2, oby + opy)
     ctx.textAlign = 'left'
   }
 
   cy += 22
 
-  // ── Gradient swatch ──
   const swY = cy
   const swH = SWATCH_H
-  const grad = ctx.createLinearGradient(x, 0, x + w, 0)
+  const grad = ctx.createLinearGradient(innerX, 0, innerX + innerW, 0)
   const stopDenom = Math.max(1, userHues.length - 1)
   userHues.forEach((h, i) => {
     grad.addColorStop(i / stopDenom, `hsl(${Math.round(h)}, 100%, 50%)`)
   })
 
   ctx.beginPath()
-  ctx.roundRect(x, swY, w, swH, 6)
+  ctx.roundRect(innerX, swY, innerW, swH, 6)
   ctx.fillStyle = grad
   ctx.fill()
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)'
   ctx.lineWidth = 1
   ctx.stroke()
 
-  // Reference marker inside swatch (dual-stroke line + pill label)
   if (hasRef) {
-    const mx = x + refPosition * w
+    const mx = innerX + refPosition * innerW
     const refShort = tl(locale, 'results.reference_short')
 
-    const pillSize = shrinkFont(ctx, refShort, '700', SANS, w * 0.32, 14, 10)
+    const pillSize = shrinkFont(ctx, refShort, '700', SANS, innerW * 0.32, 14, 10)
     ctx.font = `700 ${pillSize}px ${SANS}`
     const refLW = ctx.measureText(refShort).width
     const pPadX = 7
     const pPadY = 5
     const pW = refLW + pPadX * 2
     const pH = pillSize + pPadY * 2
-    const pX = mx - pW / 2
+    const pX = Math.max(innerX + 2, Math.min(innerX + innerW - pW - 2, mx - pW / 2))
     const pY = swY + (swH - pH) / 2
 
-    // Marker line segments (top + bottom around pill)
     const lineTop = swY + 1
     const lineBot = swY + swH - 1
     const gapPad = 1.5
@@ -568,7 +616,6 @@ function drawBoundaryCell(
 
     ctx.restore()
 
-    // Pill background
     ctx.fillStyle = 'rgba(15, 23, 42, 0.72)'
     ctx.beginPath()
     ctx.roundRect(pX, pY, pW, pH, 3)
@@ -577,7 +624,6 @@ function drawBoundaryCell(
     ctx.lineWidth = 1
     ctx.stroke()
 
-    // Pill text
     ctx.fillStyle = 'rgba(255, 255, 255, 0.95)'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
@@ -585,63 +631,78 @@ function drawBoundaryCell(
     ctx.textAlign = 'left'
   }
 
-  cy = swY + swH + 12
+  cy = swY + swH + 10
 
-  // ── Reference value row ──
   const valSize = 15
 
   ctx.textBaseline = 'top'
   ctx.textAlign = 'left'
-  ctx.fillStyle = C.muted
+  ctx.fillStyle = C.sub
   ctx.font = `400 ${valSize}px ${SANS}`
-  ctx.fillText(refLabel, x, cy)
+  ctx.fillText(refLabel, innerX, cy)
 
   ctx.textAlign = 'right'
-  ctx.fillStyle = 'rgba(232, 230, 240, 0.5)'
+  ctx.fillStyle = C.sub
   ctx.font = `400 ${valSize}px ${MONO}`
-  ctx.fillText(`${dev.referenceHue}\u00B0`, x + w, cy)
+  ctx.fillText(`${dev.referenceHue}\u00B0`, innerX + innerW, cy)
 
   cy += valSize + 6
 
-  // ── Measured value row ──
   ctx.textAlign = 'left'
-  ctx.fillStyle = C.muted
+  ctx.fillStyle = C.sub
   ctx.font = `400 ${valSize}px ${SANS}`
-  ctx.fillText(measLabel, x, cy)
+  ctx.fillText(measLabel, innerX, cy)
 
   ctx.textAlign = 'right'
   ctx.fillStyle = C.text
   ctx.font = `600 ${valSize}px ${MONO}`
-  ctx.fillText(`${Math.round(dev.userHue)}\u00B0`, x + w, cy)
+  ctx.fillText(`${Math.round(dev.userHue)}\u00B0`, innerX + innerW, cy)
 
   cy += valSize + 10
 
-  // ── Diff badge ──
   const diff = Math.round(dev.difference)
   const diffStr = diff === 0 ? '\u00B10\u00B0' : diff > 0 ? `+${diff}\u00B0` : `${diff}\u00B0`
   const diffColor = Math.abs(diff) <= 5 ? '#34d399' : Math.abs(diff) <= 15 ? '#fbbf24' : '#f87171'
+  const diffBg = Math.abs(diff) <= 5
+    ? 'rgba(52, 211, 153, 0.10)'
+    : Math.abs(diff) <= 15
+      ? 'rgba(251, 191, 36, 0.10)'
+      : 'rgba(248, 113, 113, 0.10)'
 
-  ctx.textAlign = 'right'
+  const diffFontSize = valSize + 1
+  ctx.font = `700 ${diffFontSize}px ${MONO}`
+  const dtw = ctx.measureText(diffStr).width
+  const dpx = 8
+  const dpy = 4
+  const dbw = dtw + dpx * 2
+  const dbh = diffFontSize + dpy * 2
+  const dbx = innerX + innerW - dbw
+  const dby = cy - dpy
+
+  ctx.fillStyle = diffBg
+  ctx.beginPath()
+  ctx.roundRect(dbx, dby, dbw, dbh, 4)
+  ctx.fill()
+
   ctx.fillStyle = diffColor
-  ctx.font = `700 ${valSize + 1}px ${MONO}`
-  ctx.fillText(diffStr, x + w, cy)
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'top'
+  ctx.fillText(diffStr, dbx + dbw / 2, cy)
   ctx.textAlign = 'left'
 }
 
 // ── Footer ──
 
-function drawFooter(ctx: CanvasRenderingContext2D, locale: Locale): void {
-  const dividerY = H - 120
-  const textY = H - 76
-
+function drawFooter(ctx: CanvasRenderingContext2D, locale: Locale, startY: number): void {
   ctx.strokeStyle = C.border
   ctx.lineWidth = 1
   ctx.setLineDash([])
   ctx.beginPath()
-  ctx.moveTo(PAD, dividerY)
-  ctx.lineTo(W - PAD, dividerY)
+  ctx.moveTo(PAD, startY)
+  ctx.lineTo(W - PAD, startY)
   ctx.stroke()
 
+  const textY = startY + 44
   ctx.fillStyle = C.muted
   ctx.font = `400 22px ${SANS}`
   ctx.textBaseline = 'middle'
